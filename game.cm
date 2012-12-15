@@ -1,4 +1,12 @@
 Group is
 
 functioning/sources.cm
+opengl/GL.cm
+
+sml-lib/bdd/bdd.cm
+
+types.sml
+robot.sml
+render.sml
 game.sml
+
