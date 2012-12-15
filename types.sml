@@ -3,8 +3,15 @@ struct
 
 datatype spec = RGB of GL.GLdouble * GL.GLdouble * GL.GLdouble;
 
+datatype fixture_data = RobotFixture
+                      | LeftArrowFixture
+                      | RightArrowFixture
+                      | UpArrowFixture
+                      | DownArrowFixture
+                      | GenericFixture
+
 structure BDD = BDDWorld(
-                struct type fixture_data = unit
+                struct type fixture_data = fixture_data
                        type body_data = unit
                        type joint_data = unit
                 end

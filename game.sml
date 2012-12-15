@@ -15,6 +15,10 @@ struct
   val use_gl = true
 
   val steel = Graphics.requireimage "media/graphics/steel.png"
+  val uparrow = Graphics.requireimage "media/graphics/uparrow.png"
+  val downarrow = Graphics.requireimage "media/graphics/downarrow.png"
+  val leftarrow = Graphics.requireimage "media/graphics/leftarrow.png"
+  val rightarrow = Graphics.requireimage "media/graphics/rightarrow.png"
 
   fun surface_metadata surface =
       let
@@ -167,8 +171,10 @@ struct
 (*              val vl = List.tabulate (n, fn ii => tf @*: (BDDPolygon.get_vertex(p, ii))) *)
               val vl = List.tabulate (n, fn ii => (BDDPolygon.get_vertex(p, ii)))
           in
-              (* Render.draw_solid_polygon vl color*)
-              Render.draw_textured_polygon vl tf (!steel_texture)
+              case BDD.Fixture.get_data fix of
+                  RobotFixture =>
+                  Render.draw_textured_polygon vl tf (!steel_texture)
+                | _ => ()
           end
         | BDDShape.Circle {radius, p} =>
           let val center = tf @*: p

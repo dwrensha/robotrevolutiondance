@@ -3,16 +3,11 @@ struct
 
 open Types
 
-val columnCount = 5
-val rowCount = 16
-
-val xs = Array.fromList [0.0, ~10.0, ~5.0, 5.0, 10.0]
-
 fun init world =
     let
         val ground_body = BDD.World.create_body (world,
                                                  {typ = BDD.Body.Static,
-                                                  position = BDDMath.vec2 (0.0, ~0.01),
+                                                  position = BDDMath.vec2 (0.0, 0.0),
                                                   angle = 0.0,
                                                   linear_velocity = BDDMath.vec2_zero,
                                                   angular_velocity = 0.0,
@@ -26,9 +21,7 @@ fun init world =
                                                   data = (),
                                                   inertia_scale = 1.0
                                                 })
-        val ground_shape = BDDShape.Polygon (BDDPolygon.box (40.0, 0.01))
-        val ground_fixture = BDD.Body.create_fixture_default
-                             (ground_body, ground_shape, (), 1.0)
+
 
         val base_body = BDD.World.create_body (world,
                                                  {typ = BDD.Body.Dynamic,
@@ -49,7 +42,7 @@ fun init world =
 
         val base_shape = BDDShape.Polygon (BDDPolygon.box (4.0, 0.5))
         val base_fixture = BDD.Body.create_fixture_default
-                               (base_body, base_shape, (), 5.0)
+                               (base_body, base_shape, RobotFixture, 5.0)
 
         val v = BDDMath.vec2 (0.0, 0.0)
         val axis = BDDMath.vec2normalized (BDDMath.vec2 (1.0, 0.0))
@@ -72,7 +65,7 @@ fun init world =
                           collide_connected = false
                  })
 
-        val segment1_length = 6.0
+        val segment1_length = 10.0
         val segment1_body = BDD.World.create_body (world,
                                                  {typ = BDD.Body.Dynamic,
                                                   position = BDDMath.vec2 (0.0, 3.0),
@@ -93,7 +86,7 @@ fun init world =
 
         val segment1_shape = BDDShape.Polygon (BDDPolygon.box (0.5, segment1_length / 2.0))
         val segment1_fixture = BDD.Body.create_fixture_default
-                                   (segment1_body, segment1_shape, (), 5.0)
+                                   (segment1_body, segment1_shape, RobotFixture, 5.0)
 
         val j1 = BDD.World.create_joint
                  (world, {typ = BDD.Joint.RevoluteDef
@@ -135,7 +128,7 @@ fun init world =
 
         val segment2_shape = BDDShape.Polygon (BDDPolygon.box (0.5, segment2_length / 2.0))
         val segment2_fixture = BDD.Body.create_fixture_default
-                                   (segment2_body, segment2_shape, (), 5.0)
+                                   (segment2_body, segment2_shape, RobotFixture, 5.0)
 
 
         val j2 = BDD.World.create_joint
@@ -183,7 +176,7 @@ fun bullet world =
       val shape = BDDShape.Circle {radius = 0.25,
                                    p = BDDMath.vec2_zero}
       val fixture = BDD.Body.create_fixture_default
-                        (body, shape, (), 20.0)
+                        (body, shape, GenericFixture, 20.0)
       val () = BDD.Fixture.set_restitution (fixture, 0.05)
   in ()
   end

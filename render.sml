@@ -45,6 +45,7 @@ fun draw_textured_polygon vertexList transform texture =
             end
     in
         glEnable GL_TEXTURE_2D;
+        glBindTexture GL_TEXTURE texture;
         glColor3f 1.0 1.0 1.0;
         glBegin GL_TRIANGLE_FAN;
         List.map vtx vertexList;
@@ -52,6 +53,26 @@ fun draw_textured_polygon vertexList transform texture =
 
         glDisable GL_TEXTURE_2D
     end
+
+
+fun draw_sprite [v1, v2, v3, v4] texture =
+    (
+        glEnable GL_TEXTURE_2D;
+        glBindTexture GL_TEXTURE texture;
+        glBegin(GL_QUADS);
+        glTexCoord2i 0 1;
+        glVertex2d (BDDMath.vec2x v1) (BDDMath.vec2y v1);
+        glTexCoord2i 1 1;
+        glVertex2d (BDDMath.vec2x v2) (BDDMath.vec2y v2);
+        glTexCoord2i 1 0;
+        glVertex2d (BDDMath.vec2x v3) (BDDMath.vec2y v3);
+        glTexCoord2i 0 0;
+        glVertex2d (BDDMath.vec2x v4) (BDDMath.vec2y v4);
+        glEnd();
+        glDisable GL_TEXTURE_2D
+    )
+  | draw_sprite _ _ =
+    raise Fail "can only draw a sprite with 4 vertices"
 
 
 fun draw_solid_circle center radius axis (RGB (r, g, b)) =
