@@ -848,6 +848,9 @@ signature GL =
         val c_glTexCoord2f : GLreal * GLreal -> unit
         val glTexCoord2f : GLreal -> GLreal -> unit
 
+        val c_glTexCoord2d : GLdouble * GLdouble -> unit
+        val glTexCoord2d : GLdouble -> GLdouble -> unit
+
         val c_glTexCoord2i : int * int -> unit
         val glTexCoord2i : int -> int -> unit
 

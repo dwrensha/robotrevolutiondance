@@ -14,6 +14,42 @@ struct
   val height = 480
   val use_gl = true
 
+  val steel = Graphics.requireimage "media/graphics/steel.png"
+
+  fun surface_metadata surface =
+      let
+          val w = SDL.surface_width surface
+          val h = SDL.surface_height surface
+          val format = case (SDL.get_bytes_per_pixel surface,
+                             SDL.is_rgb surface) of
+                           (4, true) => GL_RGBA
+                         | (4, false) => GL_BGRA
+                         | (_, true) => GL_RGB
+                         | (_, false) => GL_BGR
+      in
+          {width = w, height = h, format = format}
+      end
+
+  fun glGenSingleTexture () =
+      let val arr = Array.array (1, 0)
+          val () = glGenTextures 1 arr
+      in Array.sub (arr, 0)
+      end
+
+  fun load_texture surface =
+      let
+          val {width, height, format} = surface_metadata surface
+          val texture = glGenSingleTexture ()
+      in
+          glBindTexture GL_TEXTURE_2D texture;
+          glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER GL_NEAREST;
+          glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER GL_NEAREST;
+          glTexImage2D GL_TEXTURE_2D 0 4 width height
+                       0 format GL_UNSIGNED_BYTE (SDL.getpixels surface);
+          texture
+      end
+
+
   fun screen_to_world (x, y) (View {center, zoom, ...}) =
       let val u = Real.fromInt x / Real.fromInt width
           val v = Real.fromInt (height - y) / Real.fromInt height
@@ -98,6 +134,8 @@ struct
 
   val initstate = init_test Robot.test
 
+  val steel_texture = ref 0
+
   fun initscreen screen =
       (
        glBlendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA;
@@ -109,6 +147,8 @@ struct
        glClear GL_COLOR_BUFFER_BIT;
        glMatrixMode GL_MODELVIEW;
        glLoadIdentity();
+
+       steel_texture := load_texture steel;
        ()
       )
 
@@ -124,8 +164,11 @@ struct
       case BDD.Fixture.shape fix of
           BDDShape.Polygon p =>
           let val n = BDDPolygon.get_vertex_count p
-              val vl = List.tabulate (n, fn ii => tf @*: (BDDPolygon.get_vertex(p, ii)))
-          in Render.draw_solid_polygon vl color
+(*              val vl = List.tabulate (n, fn ii => tf @*: (BDDPolygon.get_vertex(p, ii))) *)
+              val vl = List.tabulate (n, fn ii => (BDDPolygon.get_vertex(p, ii)))
+          in
+              (* Render.draw_solid_polygon vl color*)
+              Render.draw_textured_polygon vl tf (!steel_texture)
           end
         | BDDShape.Circle {radius, p} =>
           let val center = tf @*: p

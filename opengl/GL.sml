@@ -886,6 +886,9 @@ structure GL :> GL =
         val c_glTexCoord2f = _import "glTexCoord2f" stdcall: GLreal * GLreal -> unit;
         fun glTexCoord2f s t = c_glTexCoord2f (s, t) : unit;
 
+        val c_glTexCoord2d = _import "glTexCoord2d" stdcall: GLdouble * GLdouble -> unit;
+        fun glTexCoord2d s t = c_glTexCoord2d (s, t) : unit;
+
         val c_glTexCoord2i = _import "glTexCoord2i" stdcall: int * int -> unit;
         fun glTexCoord2i s t = c_glTexCoord2i (s, t) : unit;
 

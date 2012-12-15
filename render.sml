@@ -32,6 +32,28 @@ fun draw_solid_polygon vertexList (RGB (r, g, b)) =
      glEnd()
     )
 
+fun draw_textured_polygon vertexList transform texture =
+    let
+        fun vtx v =
+            let val (x, y) = BDDMath.vec2xy (transform @*: v)
+                val (lx, ly) = BDDMath.vec2xy v
+                val lx' = lx / 2.0
+                val ly' = ly / 2.0
+            in
+                glTexCoord2d lx' ly';
+                glVertex2d x y
+            end
+    in
+        glEnable GL_TEXTURE_2D;
+        glColor3f 1.0 1.0 1.0;
+        glBegin GL_TRIANGLE_FAN;
+        List.map vtx vertexList;
+        glEnd ();
+
+        glDisable GL_TEXTURE_2D
+    end
+
+
 fun draw_solid_circle center radius axis (RGB (r, g, b)) =
     let val (centerx, centery) = BDDMath.vec2xy center
         val k_segments = 16
