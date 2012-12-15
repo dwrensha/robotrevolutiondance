@@ -79,27 +79,6 @@ struct
                then RGB (0.6, 0.6, 0.6)
                else RGB (0.9, 0.7, 0.7)
 
-  datatype contact_point = CP of {position : BDDMath.vec2,
-                                  state : BDDTypes.point_state}
-
-  (* Track the contact points with a presolve callback in order to
-  catch any whose life is shorter than a step. *)
-
-  val contact_points = (ref []) : contact_point list ref
-
-  fun pre_solve (contact, old_manifold) =
-      let val manifold = BDD.Contact.get_manifold contact
-          val (state1, state2) = BDDCollision.get_point_states (old_manifold, manifold)
-          val world_manifold = BDD.Contact.get_world_manifold contact
-          val points = #points world_manifold
-          fun addpoint (i, p) =
-              let val cp = CP {position = p, state = Array.sub (state2, i)}
-              in contact_points := (cp :: (!contact_points))
-              end
-          val () = Array.appi addpoint points
-      in
-          ()
-      end
 
   fun resize (v as View {center, zoom, needs_resize = false}) = v
     | resize (View {center, zoom, needs_resize = true}) =
@@ -279,23 +258,42 @@ struct
           glEnd()
       end
 
+  val ticks_per_second = 60
+
+  val leading_ticks = ticks_per_second * 4
+  val target_box_y = 40.0
+
   fun drawmove current_ticks (tick, dir) =
       let
           val ticks_past = current_ticks - tick
           val w = 3.0
           val h = 3.0
           val x = case dir of
-                      Left => ~30.0
-                    | Down => ~26.0
-                    | Up => ~22.0
-                    | Right => ~18.0
-          val y = 1.0 + (Real.fromInt (ticks_past) / 4.0 )
-          val v3 = BDDMath.vec2 (x + w / 2.0, y + h / 2.0)
-          val v4 = BDDMath.vec2 (x - w / 2.0, y + h / 2.0)
+                      Left => ~28.0
+                    | Down => ~24.0
+                    | Up => ~20.0
+                    | Right => ~16.0
+          val y = target_box_y * (Real.fromInt ticks_past / Real.fromInt leading_ticks)
           val v1 = BDDMath.vec2 (x - w / 2.0, y - h / 2.0)
           val v2 = BDDMath.vec2 (x + w / 2.0, y - h / 2.0)
+          val v3 = BDDMath.vec2 (x + w / 2.0, y + h / 2.0)
+          val v4 = BDDMath.vec2 (x - w / 2.0, y + h / 2.0)
       in
           Render.draw_sprite [v1, v2, v3, v4] (arrow_texture dir)
+      end
+
+  fun draw_target_box () =
+      let
+          val x = ~22.0
+          val y = target_box_y
+          val w = 16.0
+          val h = 4.0
+          val v1 = BDDMath.vec2 (x - w / 2.0, y - h / 2.0)
+          val v2 = BDDMath.vec2 (x + w / 2.0, y - h / 2.0)
+          val v3 = BDDMath.vec2 (x + w / 2.0, y + h / 2.0)
+          val v4 = BDDMath.vec2 (x - w / 2.0, y + h / 2.0)
+      in
+       Render.draw_polygon [v1, v2, v3, v4] (RGB (1.0, 1.0, 1.0))
       end
 
   fun render screen (GS {world, mouse_joint, settings, moves, ticks, ...}) =
@@ -308,13 +306,13 @@ struct
    drawmousejoint mouse_joint;
 
    Queue.app (drawmove ticks) moves;
+   draw_target_box();
 
    glFlush();
    SDL.glflip();
    ()
   end
 
-  val ticks_per_second = 60
 
   fun dophysics world =
       let val timestep = 1.0 / (Real.fromInt ticks_per_second)
