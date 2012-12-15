@@ -44,6 +44,8 @@ fun draw_textured_polygon vertexList transform texture =
                 glVertex2d x y
             end
     in
+        glEnable GL_BLEND;
+        glBlendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA;
         glEnable GL_TEXTURE_2D;
         glColor3f 1.0 1.0 1.0;
         glBindTexture GL_TEXTURE_2D texture;
@@ -57,6 +59,8 @@ fun draw_textured_polygon vertexList transform texture =
 
 fun draw_sprite [v1, v2, v3, v4] texture =
     (
+        glEnable GL_BLEND;
+        glBlendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA;
         glEnable GL_TEXTURE_2D;
         glColor3f 1.0 1.0 1.0;
         glBindTexture GL_TEXTURE_2D texture;
