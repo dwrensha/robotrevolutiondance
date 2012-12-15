@@ -92,8 +92,8 @@ fun init world =
                                      upper_translation = 10.0,
                                      enable_limit = true,
                                      max_motor_force = 10000.0,
-                                     motor_speed = 10.0,
-                                     enable_motor = false
+                                     motor_speed = 0.0,
+                                     enable_motor = true
                                     },
                           user_data = (),
                           body_a = ground_body,
@@ -132,9 +132,9 @@ fun init world =
                                      lower_angle = ~0.25 * Math.pi,
                                      upper_angle = 0.0 * Math.pi,
                                      enable_limit = false,
-                                     max_motor_torque = 0.0,
+                                     max_motor_torque = 30000.0,
                                      motor_speed = 0.0,
-                                     enable_motor = false
+                                     enable_motor = true
                                     },
                           user_data = (),
                           body_a = base_body,
@@ -175,9 +175,9 @@ fun init world =
                                      lower_angle = ~0.25 * Math.pi,
                                      upper_angle = 0.0 * Math.pi,
                                      enable_limit = false,
-                                     max_motor_torque = 0.0,
+                                     max_motor_torque = 10000.0,
                                      motor_speed = 0.0,
-                                     enable_motor = false
+                                     enable_motor = true
                                     },
                           user_data = (),
                           body_a = segment1_body,

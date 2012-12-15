@@ -410,6 +410,12 @@ fun new {local_anchor_a : vec2,
 
         fun is_motor_enabled () = !m_enable_motor
 
+        fun set_motor_speed speed =
+            (D.B.set_awake (bA, true);
+             D.B.set_awake (bB, true);
+             m_motor_speed := speed
+            )
+
         val dispatch =
         {
           init_velocity_constraints = init_velocity_constraints,
@@ -422,7 +428,8 @@ fun new {local_anchor_a : vec2,
         val methods = BDDDynamicsTypes.Revolute {enable_limit = enable_limit,
                                                  is_limit_enabled = is_limit_enabled,
                                                  enable_motor = enable_motor,
-                                                 is_motor_enabled = is_motor_enabled}
+                                                 is_motor_enabled = is_motor_enabled,
+                                                 set_motor_speed = set_motor_speed}
 
     in
         (dispatch, methods)

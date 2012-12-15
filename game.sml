@@ -274,7 +274,7 @@ struct
 
   fun dophysics world =
       let val timestep = 1.0 / (Real.fromInt ticks_per_second)
-          val () = BDD.World.step (world, timestep, 8, 3)
+          val () = BDD.World.step (world, timestep, 8, 5)
       in () end
 
   fun dotick (s as GS {world, view, test, mouse_joint, settings}) =

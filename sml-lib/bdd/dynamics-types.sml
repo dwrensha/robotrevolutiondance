@@ -106,12 +106,14 @@ struct
          | Revolute of {enable_limit : bool -> unit,
                         is_limit_enabled : unit -> bool,
                         enable_motor : bool -> unit,
-                        is_motor_enabled : unit -> bool
+                        is_motor_enabled : unit -> bool,
+                        set_motor_speed : real -> unit
                        }
          | Prismatic of {enable_limit : bool -> unit,
-                        is_limit_enabled : unit -> bool,
-                        enable_motor : bool -> unit,
-                        is_motor_enabled : unit -> bool
+                         is_limit_enabled : unit -> bool,
+                         enable_motor : bool -> unit,
+                         is_motor_enabled : unit -> bool,
+                         set_motor_speed : real -> unit
                        }
          | Unknown of unit
 
