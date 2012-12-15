@@ -30,57 +30,136 @@ fun init world =
         val ground_fixture = BDD.Body.create_fixture_default
                              (ground_body, ground_shape, (), 1.0)
 
-        val wall_body = BDD.World.create_body (world,
-                                               {typ = BDD.Body.Static,
-                                                position = BDDMath.vec2 (20.0, 10.0),
-                                                angle = 0.0,
-                                                linear_velocity = BDDMath.vec2_zero,
-                                                angular_velocity = 0.0,
-                                                linear_damping = 0.0,
-                                                angular_damping = 0.0,
-                                                allow_sleep = true,
-                                                awake = true,
-                                                fixed_rotation = false,
-                                                bullet = false,
-                                                active = true,
-                                                data = (),
-                                                inertia_scale = 1.0
-                                              })
-        val wall_shape = BDDShape.Polygon (BDDPolygon.box (0.01, 10.0))
-        val wall_fixture = BDD.Body.create_fixture_default
-                             (wall_body, wall_shape, (), 1.0)
+        val base_body = BDD.World.create_body (world,
+                                                 {typ = BDD.Body.Dynamic,
+                                                  position = BDDMath.vec2 (0.0, 1.0),
+                                                  angle = 0.0,
+                                                  linear_velocity = BDDMath.vec2_zero,
+                                                  angular_velocity = 0.0,
+                                                  linear_damping = 0.0,
+                                                  angular_damping = 0.0,
+                                                  allow_sleep = false,
+                                                  awake = true,
+                                                  fixed_rotation = false,
+                                                  bullet = false,
+                                                  active = true,
+                                                  data = (),
+                                                  inertia_scale = 1.0
+                                                })
+
+        val base_shape = BDDShape.Polygon (BDDPolygon.box (4.0, 0.5))
+        val base_fixture = BDD.Body.create_fixture_default
+                               (base_body, base_shape, (), 5.0)
+
+        val v = BDDMath.vec2 (0.0, 0.0)
+        val axis = BDDMath.vec2normalized (BDDMath.vec2 (1.0, 0.0))
+        val j = BDD.World.create_joint
+                 (world, {typ = BDD.Joint.PrismaticDef
+                                    {local_anchor_a = BDD.Body.get_local_point (ground_body, v),
+                                     local_anchor_b = BDD.Body.get_local_point (base_body, v),
+                                     reference_angle = 0.0,
+                                     local_axis_a = BDD.Body.get_local_point (ground_body, axis),
+                                     lower_translation = ~10.0,
+                                     upper_translation = 10.0,
+                                     enable_limit = true,
+                                     max_motor_force = 10000.0,
+                                     motor_speed = 10.0,
+                                     enable_motor = false
+                                    },
+                          user_data = (),
+                          body_a = ground_body,
+                          body_b = base_body,
+                          collide_connected = false
+                 })
+
+        val segment1_length = 6.0
+        val segment1_body = BDD.World.create_body (world,
+                                                 {typ = BDD.Body.Dynamic,
+                                                  position = BDDMath.vec2 (0.0, 3.0),
+                                                  angle = 0.0,
+                                                  linear_velocity = BDDMath.vec2_zero,
+                                                  angular_velocity = 0.0,
+                                                  linear_damping = 0.0,
+                                                  angular_damping = 0.0,
+                                                  allow_sleep = false,
+                                                  awake = true,
+                                                  fixed_rotation = false,
+                                                  bullet = false,
+                                                  active = true,
+                                                  data = (),
+                                                  inertia_scale = 1.0
+                                                })
 
 
-        val shape = BDDShape.Polygon (BDDPolygon.box (0.5, 0.5))
+        val segment1_shape = BDDShape.Polygon (BDDPolygon.box (0.5, segment1_length / 2.0))
+        val segment1_fixture = BDD.Body.create_fixture_default
+                                   (segment1_body, segment1_shape, (), 5.0)
+
+        val j1 = BDD.World.create_joint
+                 (world, {typ = BDD.Joint.RevoluteDef
+                                    {local_anchor_a = BDDMath.vec2(0.0, 0.0),
+                                     local_anchor_b = BDDMath.vec2(0.0, ~segment1_length / 2.0),
+                                     reference_angle = 0.0,
+                                     lower_angle = ~0.25 * Math.pi,
+                                     upper_angle = 0.0 * Math.pi,
+                                     enable_limit = false,
+                                     max_motor_torque = 0.0,
+                                     motor_speed = 0.0,
+                                     enable_motor = false
+                                    },
+                          user_data = (),
+                          body_a = base_body,
+                          body_b = segment1_body,
+                          collide_connected = false
+                 })
+
+
+        val segment2_length = segment1_length
+        val segment2_body = BDD.World.create_body (world,
+                                                 {typ = BDD.Body.Dynamic,
+                                                  position = BDDMath.vec2 (0.0, 10.0),
+                                                  angle = 0.0,
+                                                  linear_velocity = BDDMath.vec2_zero,
+                                                  angular_velocity = 0.0,
+                                                  linear_damping = 0.0,
+                                                  angular_damping = 0.0,
+                                                  allow_sleep = false,
+                                                  awake = true,
+                                                  fixed_rotation = false,
+                                                  bullet = false,
+                                                  active = true,
+                                                  data = (),
+                                                  inertia_scale = 1.0
+                                                })
+
+
+        val segment2_shape = BDDShape.Polygon (BDDPolygon.box (0.5, segment2_length / 2.0))
+        val segment2_fixture = BDD.Body.create_fixture_default
+                                   (segment2_body, segment2_shape, (), 5.0)
+
+
+        val j2 = BDD.World.create_joint
+                 (world, {typ = BDD.Joint.RevoluteDef
+                                    {local_anchor_a = BDDMath.vec2(0.0, segment1_length / 2.0),
+                                     local_anchor_b = BDDMath.vec2(0.0, ~segment2_length / 2.0),
+                                     reference_angle = 0.0,
+                                     lower_angle = ~0.25 * Math.pi,
+                                     upper_angle = 0.0 * Math.pi,
+                                     enable_limit = false,
+                                     max_motor_torque = 0.0,
+                                     motor_speed = 0.0,
+                                     enable_motor = false
+                                    },
+                          user_data = (),
+                          body_a = segment1_body,
+                          body_b = segment2_body,
+                          collide_connected = false
+                 })
+
+
+
     in
-        BDDOps.for 0 (columnCount - 1) (fn j =>
-         BDDOps.for 0 (rowCount - 1) (fn i =>
-            let val n = j * rowCount + i
-                val pos = BDDMath.vec2 (Array.sub(xs, j),
-                                        0.752 + 1.54 * (Real.fromInt i))
-                val body = BDD.World.create_body (world,
-                                                  {typ = BDD.Body.Dynamic,
-                                                   position = pos,
-                                                   angle = 0.0,
-                                                   linear_velocity = BDDMath.vec2_zero,
-                                                   angular_velocity = 0.0,
-                                                   linear_damping = 0.0,
-                                                   angular_damping = 0.0,
-                                                   allow_sleep = true,
-                                                   awake = true,
-                                                   fixed_rotation = false,
-                                                   bullet = false,
-                                                   active = true,
-                                                   data = (),
-                                                   inertia_scale = 1.0
-                                                  })
-                val fixture = BDD.Body.create_fixture_default
-                                  (body, shape, (), 1.0)
-                val () = BDD.Fixture.set_friction (fixture, 0.3)
-            in ()
-            end
-         )
-        )
+        ()
     end
 
 

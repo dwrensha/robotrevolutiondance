@@ -378,6 +378,11 @@ struct
       mouse_motion s (screen_to_world (x, y) (#view gs))
 
 
+    | handle_event (SDL.E_KeyDown {sym = SDL.SDLK_z}) s =
+      update_view s (BDDMath.vec2 (0.0, 0.0)) 1.1
+    | handle_event (SDL.E_KeyDown {sym = SDL.SDLK_x}) s =
+      update_view s (BDDMath.vec2 (0.0, 0.0)) 0.9
+
     | handle_event e (s as GS {world, test = Test {handle_event = he, ... }, ...})  =
       (he world e; SOME s)
 
