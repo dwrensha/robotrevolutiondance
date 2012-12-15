@@ -3,11 +3,10 @@ struct
 
 datatype spec = RGB of GL.GLdouble * GL.GLdouble * GL.GLdouble;
 
+datatype direction = Up | Down | Left | Right
+
 datatype fixture_data = RobotFixture
-                      | LeftArrowFixture
-                      | RightArrowFixture
-                      | UpArrowFixture
-                      | DownArrowFixture
+                      | ArrowFixture of direction
                       | GenericFixture
 
 structure BDD = BDDWorld(

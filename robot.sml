@@ -3,7 +3,7 @@ struct
 
 open Types
 
-fun make_arrow_body world data x y =
+fun make_arrow_body world dir x y =
     let
         val arrow_body = BDD.World.create_body (world,
                                                  {typ = BDD.Body.Static,
@@ -26,7 +26,7 @@ fun make_arrow_body world data x y =
         val arrow_fixture = BDD.Body.create_fixture
                               (arrow_body,
                                    {shape = arrow_shape,
-                                    data = data,
+                                    data = ArrowFixture dir,
                                     friction = 0.0,
                                     restitution = 0.0,
                                     density = 0.0,
@@ -187,10 +187,10 @@ fun init world =
 
 
 
-        val uparrow_body = make_arrow_body world UpArrowFixture 10.0 15.0
-        val downarrow_body = make_arrow_body world DownArrowFixture 10.0 5.0
-        val leftarrow_body = make_arrow_body world LeftArrowFixture 5.0 10.0
-        val righttarrow_body = make_arrow_body world RightArrowFixture 15.0 10.0
+        val uparrow_body = make_arrow_body world Up 10.0 15.0
+        val downarrow_body = make_arrow_body world Down 10.0 5.0
+        val leftarrow_body = make_arrow_body world Left 5.0 10.0
+        val righttarrow_body = make_arrow_body world Right 15.0 10.0
 
 
     in

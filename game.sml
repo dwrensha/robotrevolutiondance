@@ -144,6 +144,11 @@ struct
   val leftarrow_texture = ref 0
   val rightarrow_texture = ref 0
 
+  fun arrow_texture Up = !uparrow_texture
+    | arrow_texture Down = !downarrow_texture
+    | arrow_texture Left = !leftarrow_texture
+    | arrow_texture Right = !rightarrow_texture
+
   fun initscreen screen =
       (
        glBlendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA;
@@ -182,14 +187,8 @@ struct
               case BDD.Fixture.get_data fix of
                   RobotFixture =>
                   Render.draw_textured_polygon vl tf (!steel_texture)
-                | UpArrowFixture =>
-                  Render.draw_sprite (List.map (fn v => tf @*: v) vl) (!uparrow_texture)
-                | DownArrowFixture =>
-                  Render.draw_sprite (List.map (fn v => tf @*: v) vl) (!downarrow_texture)
-                | RightArrowFixture =>
-                  Render.draw_sprite (List.map (fn v => tf @*: v) vl) (!rightarrow_texture)
-                | LeftArrowFixture =>
-                  Render.draw_sprite (List.map (fn v => tf @*: v) vl) (!leftarrow_texture)
+                | ArrowFixture dir =>
+                  Render.draw_sprite (List.map (fn v => tf @*: v) vl) (arrow_texture dir)
                 | _ => ()
           end
         | BDDShape.Circle {radius, p} =>
