@@ -120,10 +120,40 @@ struct
               needs_resize = false}
        end
 
+  fun begin_contact contact =
+      let
+          val (fA, fB) = BDD.Contact.get_fixtures contact
+          fun update_touching f =
+              case BDD.Fixture.get_data f of
+                  ArrowFixture {direction, touching} =>
+                  touching := !touching + 1
+                | _ => ()
+          val () = update_touching fA
+          val () = update_touching fB
+      in
+          ()
+      end
+
+  fun end_contact contact =
+      let
+          val (fA, fB) = BDD.Contact.get_fixtures contact
+          fun update_touching f =
+              case BDD.Fixture.get_data f of
+                  ArrowFixture {direction, touching} =>
+                  touching := !touching - 1
+                | _ => ()
+          val () = update_touching fA
+          val () = update_touching fB
+      in
+          ()
+      end
+
+
   fun init_test (test as Test {init, ...}) =
       let val gravity = BDDMath.vec2 (0.0, ~10.0)
           val world = BDD.World.world (gravity, true)
-          val () = BDD.World.set_pre_solve (world, pre_solve)
+          val () = BDD.World.set_begin_contact (world, begin_contact)
+          val () = BDD.World.set_end_contact (world, end_contact)
           val () = init world
           val center = BDDMath.vec2 (0.0, 20.0)
           val zoom = 1.0
@@ -190,8 +220,8 @@ struct
                 | ArrowFixture {direction, touching} =>
                   let val vl' = List.map (fn v => tf @*: v) vl
                   in
-                      if !touching > ~1
-                      then Render.draw_solid_polygon vl' (RGB (0.4, 0.4, 1.0))
+                      if !touching > 0
+                      then Render.draw_solid_polygon vl' (RGB (0.7, 0.9, 1.0))
                       else ();
                       Render.draw_sprite vl' (arrow_texture direction)
                   end
