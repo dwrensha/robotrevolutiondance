@@ -187,8 +187,14 @@ struct
               case BDD.Fixture.get_data fix of
                   RobotFixture =>
                   Render.draw_textured_polygon vl tf (!steel_texture)
-                | ArrowFixture dir =>
-                  Render.draw_sprite (List.map (fn v => tf @*: v) vl) (arrow_texture dir)
+                | ArrowFixture {direction, touching} =>
+                  let val vl' = List.map (fn v => tf @*: v) vl
+                  in
+                      if !touching > ~1
+                      then Render.draw_solid_polygon vl' (RGB (0.4, 0.4, 1.0))
+                      else ();
+                      Render.draw_sprite vl' (arrow_texture direction)
+                  end
                 | _ => ()
           end
         | BDDShape.Circle {radius, p} =>

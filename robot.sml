@@ -26,7 +26,8 @@ fun make_arrow_body world dir x y =
         val arrow_fixture = BDD.Body.create_fixture
                               (arrow_body,
                                    {shape = arrow_shape,
-                                    data = ArrowFixture dir,
+                                    data = ArrowFixture {direction = dir,
+                                                         touching = ref 0},
                                     friction = 0.0,
                                     restitution = 0.0,
                                     density = 0.0,
@@ -165,6 +166,13 @@ fun init world =
         val segment2_shape = BDDShape.Polygon (BDDPolygon.box (0.5, segment2_length / 2.0))
         val segment2_fixture = BDD.Body.create_fixture_default
                                    (segment2_body, segment2_shape, RobotFixture, 5.0)
+
+        val end_shape = BDDShape.Polygon
+                            (BDDPolygon.rotated_box
+                                 (0.25, 0.25,
+                                  BDDMath.vec2(0.0, segment2_length / 2.0), 0.0))
+        val end_fixture = BDD.Body.create_fixture_default
+                              (segment2_body, end_shape, RobotFixture, 0.0)
 
 
         val j2 = BDD.World.create_joint
