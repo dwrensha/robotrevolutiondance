@@ -23,6 +23,8 @@ sig
        dequeue head element from from 'q' *)
     val deq : 'a queue -> 'a option * 'a queue
 
+    val peek : 'a queue -> 'a option
+
     (* app f q
        apply f to every element of q in an arbitrary order *)
     val app : ('a -> unit) -> 'a queue -> unit

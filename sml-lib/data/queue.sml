@@ -40,6 +40,16 @@ struct
              deq q
            end)
 
+    fun peek q =
+      (case !q of
+         (nil, nil) => NONE
+       | (x::front, back) => SOME x
+       | (nil, back) =>
+           let in
+             normalize q;
+             peek q
+           end)
+
     (* app over the queue apps on both lists *)
     fun app f (ref (front, back)) =
         let in

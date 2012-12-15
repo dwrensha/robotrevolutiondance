@@ -319,57 +319,22 @@ struct
           val () = BDD.World.step (world, timestep, 8, 5)
       in () end
 
+  fun discard_old_moves ticks_threshold moves =
+      case Queue.peek moves of
+          NONE => moves
+        | SOME (t, d) => if t > ticks_threshold
+                         then moves
+                         else discard_old_moves ticks_threshold (#2 (Queue.deq moves))
+
   fun dotick (s as GS {world, view, test, mouse_joint, settings, ticks, moves}) =
     let
         val Test {tick = test_tick, ...} = test
         val () = test_tick world
         val () = dophysics world
-        val () = case !(#profile settings) of
-                     SOME {step_count, total, max} =>
-                     let
-                         val step_count' = step_count + 1
-                         val {step, collide,
-                              solve, solve_toi} = BDD.World.get_profile world
-                         val total' = {step = Time.+(step, #step total),
-                                       collide = Time.+(collide, #collide total),
-                                       solve = Time.+(solve, #solve total),
-                                       solve_toi = Time.+(solve_toi, #solve_toi total)}
-                         fun tMax (t1, t2) =
-                             if Time.>(t1, t2) then t1 else t2
-                         val max' = {step = tMax(step, #step max),
-                                     collide = tMax(collide, #collide max),
-                                     solve = tMax(solve, #solve max),
-                                     solve_toi = tMax(solve_toi, #solve_toi max)}
-                         fun toString t = Real64.toString (1000.0 * (Time.toReal t))
-                         fun totalString t = Real64.toString
-                                                 (1000.0 * (Time.toReal t) /
-                                                  Real64.fromInt step_count')
-                     in
-                         print "profile:\n";
-                         print ("step: " ^ toString (step) ^ " [");
-                         print (totalString (#step total') ^ "] (");
-                         print (toString (#step max') ^ ") ");
-
-                         print ("collide: " ^ toString (collide) ^ " [");
-                         print (totalString (#collide total') ^ "] (");
-                         print (toString (#collide max') ^ ") ");
-
-                         print ("solve: " ^ toString (solve) ^ " [");
-                         print (totalString (#solve total') ^ "] (");
-                         print (toString (#solve max') ^ ") ");
-
-                         print ("solve_toi: " ^ toString (solve_toi) ^ " [");
-                         print (totalString (#solve_toi total') ^ "] (");
-                         print (toString (#solve_toi max') ^ ")\n");
-
-                         (#profile settings) := (SOME {step_count = step_count',
-                                                       total = total',
-                                                       max = max' })
-                     end
-                   | NONE => ()
+        val moves' = discard_old_moves (ticks - 2 * leading_ticks) moves
     in
         SOME (GS {world = world, view = view, test = test, ticks = ticks + 1,
-                       mouse_joint = mouse_joint, settings = settings, moves = moves})
+                       mouse_joint = mouse_joint, settings = settings, moves = moves'})
     end
 
   fun tick (s as GS {world, view, test, mouse_joint, settings, ticks, moves}) =
