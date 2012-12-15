@@ -45,8 +45,8 @@ fun draw_textured_polygon vertexList transform texture =
             end
     in
         glEnable GL_TEXTURE_2D;
-        glBindTexture GL_TEXTURE texture;
         glColor3f 1.0 1.0 1.0;
+        glBindTexture GL_TEXTURE_2D texture;
         glBegin GL_TRIANGLE_FAN;
         List.map vtx vertexList;
         glEnd ();
@@ -58,7 +58,8 @@ fun draw_textured_polygon vertexList transform texture =
 fun draw_sprite [v1, v2, v3, v4] texture =
     (
         glEnable GL_TEXTURE_2D;
-        glBindTexture GL_TEXTURE texture;
+        glColor3f 1.0 1.0 1.0;
+        glBindTexture GL_TEXTURE_2D texture;
         glBegin(GL_QUADS);
         glTexCoord2i 0 1;
         glVertex2d (BDDMath.vec2x v1) (BDDMath.vec2y v1);

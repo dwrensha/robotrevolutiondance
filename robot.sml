@@ -3,6 +3,42 @@ struct
 
 open Types
 
+fun make_arrow_body world data x y =
+    let
+        val arrow_body = BDD.World.create_body (world,
+                                                 {typ = BDD.Body.Static,
+                                                  position = BDDMath.vec2 (x, y),
+                                                  angle = 0.0,
+                                                  linear_velocity = BDDMath.vec2_zero,
+                                                  angular_velocity = 0.0,
+                                                  linear_damping = 0.0,
+                                                  angular_damping = 0.0,
+                                                  allow_sleep = false,
+                                                  awake = true,
+                                                  fixed_rotation = false,
+                                                  bullet = false,
+                                                  active = true,
+                                                  data = (),
+                                                  inertia_scale = 1.0
+                                                })
+
+        val arrow_shape = BDDShape.Polygon (BDDPolygon.box (2.0, 2.0))
+        val arrow_fixture = BDD.Body.create_fixture
+                              (arrow_body,
+                                   {shape = arrow_shape,
+                                    data = data,
+                                    friction = 0.0,
+                                    restitution = 0.0,
+                                    density = 0.0,
+                                    is_sensor = true,
+                                    filter = BDD.Fixture.default_filter})
+    in
+        arrow_body
+    end
+
+
+
+
 fun init world =
     let
         val ground_body = BDD.World.create_body (world,
@@ -149,6 +185,12 @@ fun init world =
                           collide_connected = false
                  })
 
+
+
+        val uparrow_body = make_arrow_body world UpArrowFixture 10.0 15.0
+        val downarrow_body = make_arrow_body world DownArrowFixture 10.0 5.0
+        val leftarrow_body = make_arrow_body world LeftArrowFixture 5.0 10.0
+        val righttarrow_body = make_arrow_body world RightArrowFixture 15.0 10.0
 
 
     in

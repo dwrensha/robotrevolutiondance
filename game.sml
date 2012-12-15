@@ -139,6 +139,10 @@ struct
   val initstate = init_test Robot.test
 
   val steel_texture = ref 0
+  val uparrow_texture = ref 0
+  val downarrow_texture = ref 0
+  val leftarrow_texture = ref 0
+  val rightarrow_texture = ref 0
 
   fun initscreen screen =
       (
@@ -152,7 +156,12 @@ struct
        glMatrixMode GL_MODELVIEW;
        glLoadIdentity();
 
+
        steel_texture := load_texture steel;
+       uparrow_texture := load_texture uparrow;
+       downarrow_texture := load_texture downarrow;
+       leftarrow_texture := load_texture leftarrow;
+       rightarrow_texture := load_texture rightarrow;
        ()
       )
 
@@ -168,12 +177,19 @@ struct
       case BDD.Fixture.shape fix of
           BDDShape.Polygon p =>
           let val n = BDDPolygon.get_vertex_count p
-(*              val vl = List.tabulate (n, fn ii => tf @*: (BDDPolygon.get_vertex(p, ii))) *)
               val vl = List.tabulate (n, fn ii => (BDDPolygon.get_vertex(p, ii)))
           in
               case BDD.Fixture.get_data fix of
                   RobotFixture =>
                   Render.draw_textured_polygon vl tf (!steel_texture)
+                | UpArrowFixture =>
+                  Render.draw_sprite (List.map (fn v => tf @*: v) vl) (!uparrow_texture)
+                | DownArrowFixture =>
+                  Render.draw_sprite (List.map (fn v => tf @*: v) vl) (!downarrow_texture)
+                | RightArrowFixture =>
+                  Render.draw_sprite (List.map (fn v => tf @*: v) vl) (!rightarrow_texture)
+                | LeftArrowFixture =>
+                  Render.draw_sprite (List.map (fn v => tf @*: v) vl) (!leftarrow_texture)
                 | _ => ()
           end
         | BDDShape.Circle {radius, p} =>
