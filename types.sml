@@ -58,6 +58,8 @@ datatype game_state = GS of {world : BDD.world,
                              mouse_joint : (mouse_joint * BDD.joint) option,
                              test : test,
                              view : view,
+                             ticks : int,
+                             moves : (int * direction) Queue.queue,
                              settings : settings
                             }
 

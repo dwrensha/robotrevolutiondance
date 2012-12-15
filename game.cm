@@ -4,6 +4,8 @@ functioning/sources.cm
 opengl/GL.cm
 
 sml-lib/bdd/bdd.cm
+sml-lib/data/queue-sig.sml
+sml-lib/data/queue.sml
 
 types.sml
 robot.sml

@@ -163,7 +163,8 @@ struct
                           paused = ref false,
                           profile = ref NONE}
       in GS { test = test, mouse_joint = NONE, world = world,
-              view = view, settings = settings}
+              view = view, settings = settings, ticks = 0,
+              moves = Queue.empty() }
       end
 
   val initstate = init_test Robot.test
@@ -199,14 +200,6 @@ struct
        rightarrow_texture := load_texture rightarrow;
        ()
       )
-
-  fun drawcontactpoint (CP {position, state, ...}) =
-      case state of
-          BDDTypes.AddState =>
-          Render.draw_point position 10.0 (RGB (0.3, 0.95, 0.3))
-        | BDDTypes.PersistState =>
-          Render.draw_point position 5.0 (RGB (0.3, 0.3, 0.95))
-        | _ => ()
 
   fun drawfixture color tf fix =
       case BDD.Fixture.shape fix of
@@ -286,7 +279,26 @@ struct
           glEnd()
       end
 
-  fun render screen (GS {world, mouse_joint, settings, ...}) =
+  fun drawmove current_ticks (tick, dir) =
+      let
+          val ticks_past = current_ticks - tick
+          val w = 3.0
+          val h = 3.0
+          val x = case dir of
+                      Left => ~30.0
+                    | Down => ~26.0
+                    | Up => ~22.0
+                    | Right => ~18.0
+          val y = 1.0 + (Real.fromInt (ticks_past) / 4.0 )
+          val v3 = BDDMath.vec2 (x + w / 2.0, y + h / 2.0)
+          val v4 = BDDMath.vec2 (x - w / 2.0, y + h / 2.0)
+          val v1 = BDDMath.vec2 (x - w / 2.0, y - h / 2.0)
+          val v2 = BDDMath.vec2 (x + w / 2.0, y - h / 2.0)
+      in
+          Render.draw_sprite [v1, v2, v3, v4] (arrow_texture dir)
+      end
+
+  fun render screen (GS {world, mouse_joint, settings, moves, ticks, ...}) =
   let in
    glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT);
    glLoadIdentity();
@@ -295,10 +307,7 @@ struct
    oapp BDD.Joint.get_next drawjoint (BDD.World.get_joint_list world);
    drawmousejoint mouse_joint;
 
-   if !(#draw_contacts settings)
-   then List.app drawcontactpoint (!contact_points)
-   else ();
-   contact_points := [];
+   Queue.app (drawmove ticks) moves;
 
    glFlush();
    SDL.glflip();
@@ -312,7 +321,7 @@ struct
           val () = BDD.World.step (world, timestep, 8, 5)
       in () end
 
-  fun dotick (s as GS {world, view, test, mouse_joint, settings}) =
+  fun dotick (s as GS {world, view, test, mouse_joint, settings, ticks, moves}) =
     let
         val Test {tick = test_tick, ...} = test
         val () = test_tick world
@@ -361,13 +370,14 @@ struct
                      end
                    | NONE => ()
     in
-        SOME s
+        SOME (GS {world = world, view = view, test = test, ticks = ticks + 1,
+                       mouse_joint = mouse_joint, settings = settings, moves = moves})
     end
 
-  fun tick (s as GS {world, view, test, mouse_joint, settings}) =
+  fun tick (s as GS {world, view, test, mouse_joint, settings, ticks, moves}) =
       let val view' = resize view
-          val s' = GS {world = world, view = view', test = test,
-                       mouse_joint = mouse_joint, settings = settings}
+          val s' = GS {world = world, view = view', test = test, ticks = ticks,
+                       mouse_joint = mouse_joint, settings = settings, moves = moves}
       in
           if not (!(#paused settings))
           then dotick s'
@@ -384,13 +394,14 @@ struct
       end
 
   fun mouse_up (s as GS {world, mouse_joint = NONE, test, ...}) p = SOME s
-    | mouse_up (s as GS {world, mouse_joint = SOME (mj, j), test, view, settings}) p =
+    | mouse_up (s as GS {world, mouse_joint = SOME (mj, j), test, view, settings,
+                         ticks, moves}) p =
       let val () = BDD.World.destroy_joint (world, j)
-      in SOME (GS {world = world, mouse_joint = NONE,
+      in SOME (GS {world = world, mouse_joint = NONE, ticks = ticks, moves = moves,
                    test = test, view = view, settings = settings})
       end
 
-  fun mouse_down (s as GS {world, mouse_joint, test, view, settings}) p =
+  fun mouse_down (s as GS {world, mouse_joint, test, view, settings, ticks, moves}) p =
       let val d = BDDMath.vec2 (0.001, 0.001)
           val aabb = { lowerbound = p :-: d,
                        upperbound = p :+: d
@@ -444,31 +455,40 @@ struct
                                SOME (BDD.Joint.Mouse mj) => SOME (mj, j)
                              | _ => raise Fail "expected a mouse joint"
                         end
-      in SOME (GS {world = world, mouse_joint = mbe_new_joint,
-                   test = test, view = view, settings = settings})
+      in SOME (GS {world = world, mouse_joint = mbe_new_joint, ticks = ticks,
+                   test = test, view = view, settings = settings, moves = moves})
       end
 
-  fun update_view (GS {world, mouse_joint, test, settings,
+  fun update_view (GS {world, mouse_joint, test, settings, ticks, moves,
                        view = View {center, zoom, ...}}) v s =
       SOME (GS {world = world, mouse_joint = mouse_joint, test = test,
-                settings = settings,
+                settings = settings, ticks = ticks, moves = moves,
                 view = View {center = center :+: v,
                              zoom = zoom * s,
                              needs_resize = true}})
 
 
+  fun add_move (GS {world, mouse_joint, test, settings, ticks, moves,
+                    view}) dir =
+      let
+          val moves' = Queue.enq ((ticks, dir), moves)
+      in
+      SOME (GS {world = world, mouse_joint = mouse_joint, test = test,
+                settings = settings, ticks = ticks, moves = moves',
+                view = view})
+      end
+
   fun handle_event (SDL.E_KeyDown {sym = SDL.SDLK_ESCAPE}) s = NONE
     | handle_event SDL.E_Quit s = NONE
 
     | handle_event (SDL.E_KeyDown {sym = sym as SDL.SDLK_LEFT}) s =
-      update_view s (BDDMath.vec2 (~0.5, 0.0)) 1.0
+      add_move s Left
     | handle_event (SDL.E_KeyDown {sym = sym as SDL.SDLK_RIGHT}) s =
-      update_view s (BDDMath.vec2 (0.5, 0.0)) 1.0
+      add_move s Right
     | handle_event (SDL.E_KeyDown {sym = sym as SDL.SDLK_UP}) s =
-      update_view s (BDDMath.vec2 (0.0, 0.5)) 1.0
+      add_move s Up
     | handle_event (SDL.E_KeyDown {sym = sym as SDL.SDLK_DOWN}) s =
-      update_view s (BDDMath.vec2 (0.0, ~0.5)) 1.0
-
+      add_move s Down
 
     | handle_event (SDL.E_MouseDown {button, x, y}) (s as (GS gs)) =
       mouse_down s (screen_to_world (x, y) (#view gs))

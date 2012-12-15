@@ -195,10 +195,10 @@ fun init world =
 
 
 
-        val uparrow_body = make_arrow_body world Up 10.0 15.0
-        val downarrow_body = make_arrow_body world Down 10.0 5.0
-        val leftarrow_body = make_arrow_body world Left 5.0 10.0
-        val righttarrow_body = make_arrow_body world Right 15.0 10.0
+        val uparrow_body = make_arrow_body world Up 10.0 20.0
+        val downarrow_body = make_arrow_body world Down 10.0 10.0
+        val leftarrow_body = make_arrow_body world Left 5.0 15.0
+        val righttarrow_body = make_arrow_body world Right 15.0 15.0
 
 
     in
