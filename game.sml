@@ -36,6 +36,41 @@ struct
           {width = w, height = h, format = format}
       end
 
+  fun blit surface =
+      let
+          val {width, height, format} = surface_metadata surface
+      in
+          glDrawPixels width height format GL_UNSIGNED_BYTE (SDL.getpixels surface)
+      end
+
+  fun make_message text =
+      let val pixel_width = (Font.Huge.width - Font.Huge.overlap)
+                            * String.size text
+          val pixel_height = Font.Huge.height
+          val surf = SDL.makesurface (pixel_width, pixel_height)
+          val () = SDL.clearsurface (surf, SDL.color(0w255, 0w255, 0w255, 0w255))
+          val () = Font.Huge.draw (surf, 0, 0, text)
+      in surf
+      end
+
+
+  val init_message_string = "         0"
+  val score_message = make_message init_message_string
+
+
+  fun prepare_score_message score =
+      let
+          val score' = Int.abs(score)
+          val ss = (if score < 0 then "-" else "") ^ Int.toString score'
+          val df = String.size init_message_string - String.size ss
+          val spaces = List.tabulate (df, fn _ => " ")
+          val ms = String.concat spaces ^ ss
+      in
+          SDL.clearsurface (score_message, SDL.color(0w255, 0w255, 0w255, 0w255));
+          Font.Huge.draw (score_message, 0, 0, ms)
+      end
+
+
   fun glGenSingleTexture () =
       let val arr = Array.array (1, 0)
           val () = glGenTextures 1 arr
@@ -168,7 +203,7 @@ struct
                           paused = ref false,
                           profile = ref NONE}
 
-          val () = SDLMusic.play (valOf groove)
+          val () = SDLMusic.loop (valOf groove)
       in GS { test = test, mouse_joint = NONE, world = world,
               view = view, settings = settings, ticks = 0, score = 0,
               moves = Queue.empty() }
@@ -332,7 +367,7 @@ struct
        else ()
       end
 
-  fun render screen (GS {world, mouse_joint, settings, moves, ticks, ...}) =
+  fun render screen (GS {world, mouse_joint, settings, moves, ticks, score, ...}) =
   let in
    glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT);
    glLoadIdentity();
@@ -342,6 +377,15 @@ struct
 
    Queue.app (drawmove ticks) moves;
    draw_target_box();
+
+   (* draw the score *)
+   prepare_score_message score;
+   glDisable GL_TEXTURE_2D;
+   glColor3f 1.0 1.0 1.0;
+   glRasterPos2d 0.0 42.0;
+   glPixelZoom 1.0 ~1.0;
+   blit score_message;
+
 
    glFlush();
    SDL.glflip();
@@ -354,14 +398,47 @@ struct
           val () = BDD.World.step (world, timestep, 12, 10)
       in () end
 
+  fun compute_score moves ticks =
+      let
+          local
+              val up_close = ref 0
+              val down_close = ref 0
+              val left_close = ref 0
+              val right_close = ref 0
+          in
+           fun close Up = up_close
+             | close Down = down_close
+             | close Left = left_close
+             | close Right = right_close
+          end
+
+
+          val d = 4
+          fun tally (tk, dir) =
+              if Int.abs (tk + leading_ticks - ticks) < 3
+              then (close dir) := !(close dir) + 1
+              else ()
+          val () = Queue.app tally moves
+
+          fun get_score dir =
+              case (is_touching dir, !(close dir) > 0) of
+                  (true, true) => 10
+                | (false, true) => ~1
+                | (true, false) => ~5
+                | (false, false) => 0
+      in
+          get_score Up + get_score Down + get_score Right + get_score Left
+      end
+
   fun dotick (s as GS {world, view, test, mouse_joint, settings, ticks, score, moves}) =
     let
+        val score' = score + compute_score moves ticks
         val Test {tick = robot_tick, ...} = test
         val () = robot_tick world ticks moves
         val () = dophysics world
         val moves' = discard_old_moves (ticks - 2 * leading_ticks) moves
     in
-        SOME (GS {world = world, view = view, test = test, ticks = ticks + 1, score = score,
+        SOME (GS {world = world, view = view, test = test, ticks = ticks + 1, score = score',
                        mouse_joint = mouse_joint, settings = settings, moves = moves'})
     end
 

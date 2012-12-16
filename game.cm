@@ -10,6 +10,8 @@ sml-lib/bdd/bdd.cm
 sml-lib/data/queue-sig.sml
 sml-lib/data/queue.sml
 
+font.sml
+
 types.sml
 robot.sml
 render.sml
