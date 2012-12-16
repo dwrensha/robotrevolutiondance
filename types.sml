@@ -67,6 +67,8 @@ datatype game_state = GS of {world : BDD.world,
 val ticks_per_second = 60
 val leading_ticks = ticks_per_second * 4
 
+
+(* Get rid of everything less than or equal to |ticks_threshold| *)
 fun discard_old_moves ticks_threshold moves =
     case Queue.peek moves of
         NONE => moves
