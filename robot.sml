@@ -403,10 +403,14 @@ fun plan ticks moves =
                     val pp_hit_it = (hit_it, arrow_pos dir)
                     val pp_retreat = (retreat, home_pos)
                 in
-                    robot1_plan_last := pp_retreat;
-                    robot1_plan := (Queue.enq (pp_standby, !robot1_plan ));
-                    robot1_plan := (Queue.enq (pp_hit_it, !robot1_plan ));
-                    robot1_plan := (Queue.enq (pp_retreat, !robot1_plan ));
+                    if hit_it > last_tk
+                    then (
+                        robot1_plan_last := pp_retreat;
+                        robot1_plan := (Queue.enq (pp_standby, !robot1_plan ));
+                        robot1_plan := (Queue.enq (pp_hit_it, !robot1_plan ));
+                        robot1_plan := (Queue.enq (pp_retreat, !robot1_plan ))
+                        )
+                    else ();
                     process mvs'
                 end
 
