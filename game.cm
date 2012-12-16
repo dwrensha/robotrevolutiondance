@@ -3,6 +3,9 @@ Group is
 functioning/sources.cm
 opengl/GL.cm
 
+sdlml/sdlmix-sig.sml
+sdlml/sdlmix.sml
+
 sml-lib/bdd/bdd.cm
 sml-lib/data/queue-sig.sml
 sml-lib/data/queue.sml

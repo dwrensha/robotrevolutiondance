@@ -20,6 +20,8 @@ struct
   val leftarrow = Graphics.requireimage "media/graphics/leftarrow.png"
   val rightarrow = Graphics.requireimage "media/graphics/rightarrow.png"
 
+  val groove = SDLMusic.load "media/audio/groove.mp3"
+
   fun surface_metadata surface =
       let
           val w = SDL.surface_width surface
@@ -137,6 +139,8 @@ struct
           val settings = {draw_contacts = ref false,
                           paused = ref false,
                           profile = ref NONE}
+
+          val () = SDLMusic.loop (valOf groove)
       in GS { test = test, mouse_joint = NONE, world = world,
               view = view, settings = settings, ticks = 0,
               moves = Queue.empty() }
