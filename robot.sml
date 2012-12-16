@@ -10,6 +10,8 @@ type robot = {
      base_body : BDD.Body.body,
      segment1_length : real,
      segment2_length : real,
+     get_joint1_angle : unit -> real,
+     get_joint2_angle : unit -> real,
      set_base_motor : real -> unit,
      set_joint1_motor : real -> unit,
      set_joint2_motor : real -> unit,
@@ -61,6 +63,11 @@ fun make_robot world ground_body start_pos =
                           collide_connected = false
                  })
 
+        val {set_motor_speed = set_base_motor, ... } =
+            case BDD.Joint.get_typ j of
+                SOME (BDD.Joint.Prismatic p) => p
+              | _ => raise Fail "impossible"
+
         val segment1_length = 10.0
         val segment1_body = BDD.World.create_body (world,
                                                  {typ = BDD.Body.Dynamic,
@@ -102,6 +109,12 @@ fun make_robot world ground_body start_pos =
                           body_b = segment1_body,
                           collide_connected = false
                  })
+
+        val {get_joint_angle = get_joint1_angle,
+             set_motor_speed = set_joint1_motor,
+             ...} = case BDD.Joint.get_typ j1 of
+                        SOME (BDD.Joint.Revolute r) => r
+                      | _ => raise Fail "impossible"
 
 
         val segment2_length = segment1_length
@@ -154,16 +167,22 @@ fun make_robot world ground_body start_pos =
                           collide_connected = false
                  })
 
-
+        val {get_joint_angle = get_joint2_angle,
+             set_motor_speed = set_joint2_motor,
+             ...} = case BDD.Joint.get_typ j2 of
+                        SOME (BDD.Joint.Revolute r) => r
+                      | _ => raise Fail "impossible"
 
     in
         {
          base_body = base_body,
          segment1_length = segment1_length,
          segment2_length = segment2_length,
-         set_base_motor = ignore,
-         set_joint1_motor = ignore,
-         set_joint2_motor = ignore,
+         get_joint1_angle = get_joint1_angle,
+         get_joint2_angle = get_joint2_angle,
+         set_base_motor = set_base_motor,
+         set_joint1_motor = set_joint1_motor,
+         set_joint2_motor = set_joint2_motor,
          goal = ref (BDDMath.vec2(10.0, 20.0))
         }
     end
