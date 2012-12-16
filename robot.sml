@@ -369,11 +369,15 @@ fun plan ticks moves =
               | (SOME (tk, dir), mvs') =>
                 let
                     val (last_tk, last_pos) = !robot1_plan_last
-                    val tk' = Int.min(last_tk + 5, tk + leading_ticks)
+                    val tk' = if last_tk < ticks
+                              then ticks
+                              else Int.min(last_tk + 5, tk + leading_ticks)
                     val pp = (tk', arrow_pos dir)
+                    val pp_home = (tk + leading_ticks + 1, home_pos)
                 in
-                    robot1_plan_last := pp;
+                    robot1_plan_last := pp_home;
                     robot1_plan := (Queue.enq (pp, !robot1_plan));
+                    robot1_plan := (Queue.enq (pp_home, !robot1_plan));
                     process mvs'
                 end
 
@@ -393,18 +397,18 @@ fun tick world ticks moves =
 
         val r1 = valOf (!robot1)
 
-(*         val () = robot1_plan := discard_old_moves ticks (!robot1_plan) *)
+        val () = robot1_plan := discard_old_moves ticks (!robot1_plan)
         val () = case Queue.peek (!robot1_plan) of
                      NONE => ()
                    | SOME (tk, pos) =>
-                       if ticks > tk
-                       then (#goal r1) := pos
-                       else ()
+                       (#goal r1) := pos
+
 
         val () = if Int.mod(ticks, 1) = 0
                  then control r1
                  else ()
     in
+        print ("\nticks: " ^ Int.toString ticks ^ "\n");
         print "\n\nrobot 1 plan:\n";
         print (plantos (!robot1_plan))
     end
