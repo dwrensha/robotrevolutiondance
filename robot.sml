@@ -2,67 +2,26 @@ structure Robot =
 struct
 
 open Types
+open BDDOps
+infix 6 :+: :-: %-% %+% +++
+infix 7 *: *% +*: +*+ #*% @*:
 
-fun make_arrow_body world dir x y =
+type robot = {
+     base_body : BDD.Body.body,
+     segment1_length : real,
+     segment2_length : real,
+     set_base_motor : real -> unit,
+     set_joint1_motor : real -> unit,
+     set_joint2_motor : real -> unit,
+     goal : BDDMath.vec2 ref
+}
+
+
+fun make_robot world ground_body start_pos =
     let
-        val arrow_body = BDD.World.create_body (world,
-                                                 {typ = BDD.Body.Static,
-                                                  position = BDDMath.vec2 (x, y),
-                                                  angle = 0.0,
-                                                  linear_velocity = BDDMath.vec2_zero,
-                                                  angular_velocity = 0.0,
-                                                  linear_damping = 0.0,
-                                                  angular_damping = 0.0,
-                                                  allow_sleep = false,
-                                                  awake = true,
-                                                  fixed_rotation = false,
-                                                  bullet = false,
-                                                  active = true,
-                                                  data = (),
-                                                  inertia_scale = 1.0
-                                                })
-
-        val arrow_shape = BDDShape.Polygon (BDDPolygon.box (2.0, 2.0))
-        val arrow_fixture = BDD.Body.create_fixture
-                              (arrow_body,
-                                   {shape = arrow_shape,
-                                    data = ArrowFixture {direction = dir,
-                                                         touching = ref 0},
-                                    friction = 0.0,
-                                    restitution = 0.0,
-                                    density = 0.0,
-                                    is_sensor = true,
-                                    filter = BDD.Fixture.default_filter})
-    in
-        arrow_body
-    end
-
-
-
-
-fun init world =
-    let
-        val ground_body = BDD.World.create_body (world,
-                                                 {typ = BDD.Body.Static,
-                                                  position = BDDMath.vec2 (0.0, 0.0),
-                                                  angle = 0.0,
-                                                  linear_velocity = BDDMath.vec2_zero,
-                                                  angular_velocity = 0.0,
-                                                  linear_damping = 0.0,
-                                                  angular_damping = 0.0,
-                                                  allow_sleep = true,
-                                                  awake = true,
-                                                  fixed_rotation = false,
-                                                  bullet = false,
-                                                  active = true,
-                                                  data = (),
-                                                  inertia_scale = 1.0
-                                                })
-
-
         val base_body = BDD.World.create_body (world,
                                                  {typ = BDD.Body.Dynamic,
-                                                  position = BDDMath.vec2 (0.0, 1.0),
+                                                  position = start_pos,
                                                   angle = 0.0,
                                                   linear_velocity = BDDMath.vec2_zero,
                                                   angular_velocity = 0.0,
@@ -81,7 +40,7 @@ fun init world =
         val base_fixture = BDD.Body.create_fixture_default
                                (base_body, base_shape, RobotFixture, 5.0)
 
-        val v = BDDMath.vec2 (0.0, 0.0)
+        val v = start_pos
         val axis = BDDMath.vec2normalized (BDDMath.vec2 (1.0, 0.0))
         val j = BDD.World.create_joint
                  (world, {typ = BDD.Joint.PrismaticDef
@@ -90,7 +49,7 @@ fun init world =
                                      reference_angle = 0.0,
                                      local_axis_a = BDD.Body.get_local_point (ground_body, axis),
                                      lower_translation = ~10.0,
-                                     upper_translation = 10.0,
+                                     upper_translation = 25.0,
                                      enable_limit = true,
                                      max_motor_force = 10000.0,
                                      motor_speed = 0.0,
@@ -105,7 +64,8 @@ fun init world =
         val segment1_length = 10.0
         val segment1_body = BDD.World.create_body (world,
                                                  {typ = BDD.Body.Dynamic,
-                                                  position = BDDMath.vec2 (0.0, 3.0),
+                                                  position = start_pos :+:
+                                                             BDDMath.vec2 (0.0, 3.0),
                                                   angle = 0.0,
                                                   linear_velocity = BDDMath.vec2_zero,
                                                   angular_velocity = 0.0,
@@ -147,7 +107,8 @@ fun init world =
         val segment2_length = segment1_length
         val segment2_body = BDD.World.create_body (world,
                                                  {typ = BDD.Body.Dynamic,
-                                                  position = BDDMath.vec2 (0.0, 10.0),
+                                                  position = start_pos :+:
+                                                             BDDMath.vec2 (0.0, 10.0),
                                                   angle = 0.0,
                                                   linear_velocity = BDDMath.vec2_zero,
                                                   angular_velocity = 0.0,
@@ -195,11 +156,78 @@ fun init world =
 
 
 
+    in
+        {
+         base_body = base_body,
+         segment1_length = segment1_length,
+         segment2_length = segment2_length,
+         set_base_motor = ignore,
+         set_joint1_motor = ignore,
+         set_joint2_motor = ignore,
+         goal = ref (BDDMath.vec2(10.0, 20.0))
+        }
+    end
+
+fun make_arrow_body world dir x y =
+    let
+        val arrow_body = BDD.World.create_body (world,
+                                                 {typ = BDD.Body.Static,
+                                                  position = BDDMath.vec2 (x, y),
+                                                  angle = 0.0,
+                                                  linear_velocity = BDDMath.vec2_zero,
+                                                  angular_velocity = 0.0,
+                                                  linear_damping = 0.0,
+                                                  angular_damping = 0.0,
+                                                  allow_sleep = false,
+                                                  awake = true,
+                                                  fixed_rotation = false,
+                                                  bullet = false,
+                                                  active = true,
+                                                  data = (),
+                                                  inertia_scale = 1.0
+                                                })
+
+        val arrow_shape = BDDShape.Polygon (BDDPolygon.box (2.0, 2.0))
+        val arrow_fixture = BDD.Body.create_fixture
+                              (arrow_body,
+                                   {shape = arrow_shape,
+                                    data = ArrowFixture {direction = dir,
+                                                         touching = ref 0},
+                                    friction = 0.0,
+                                    restitution = 0.0,
+                                    density = 0.0,
+                                    is_sensor = true,
+                                    filter = BDD.Fixture.default_filter})
+    in
+        arrow_body
+    end
+
+fun init world =
+    let
+        val ground_body = BDD.World.create_body (world,
+                                                 {typ = BDD.Body.Static,
+                                                  position = BDDMath.vec2 (0.0, 0.0),
+                                                  angle = 0.0,
+                                                  linear_velocity = BDDMath.vec2_zero,
+                                                  angular_velocity = 0.0,
+                                                  linear_damping = 0.0,
+                                                  angular_damping = 0.0,
+                                                  allow_sleep = true,
+                                                  awake = true,
+                                                  fixed_rotation = false,
+                                                  bullet = false,
+                                                  active = true,
+                                                  data = (),
+                                                  inertia_scale = 1.0
+                                                })
+
+        val robot1 = make_robot world ground_body ( BDDMath.vec2 (0.0, 0.0))
+        val robot2 = make_robot world ground_body ( BDDMath.vec2 (20.0, 0.0))
+
         val uparrow_body = make_arrow_body world Up 10.0 20.0
         val downarrow_body = make_arrow_body world Down 10.0 10.0
         val leftarrow_body = make_arrow_body world Left 5.0 15.0
         val righttarrow_body = make_arrow_body world Right 15.0 15.0
-
 
     in
         ()
