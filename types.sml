@@ -28,7 +28,7 @@ datatype view = View of
 datatype test = Test of
          {init : BDD.world -> unit,
           handle_event : BDD.world -> SDL.event -> unit,
-          tick : BDD.world -> int -> unit
+          tick : BDD.world -> int -> (int * direction) Queue.queue -> unit
          }
 
 type profile_data = { step_count : int,
@@ -63,5 +63,18 @@ datatype game_state = GS of {world : BDD.world,
                              moves : (int * direction) Queue.queue,
                              settings : settings
                             }
+
+val ticks_per_second = 60
+val leading_ticks = ticks_per_second * 4
+
+fun discard_old_moves ticks_threshold moves =
+    case Queue.peek moves of
+        NONE => moves
+      | SOME (t, d) => if t > ticks_threshold
+                       then moves
+                       else discard_old_moves ticks_threshold (#2 (Queue.deq moves))
+
+
+
 
 end

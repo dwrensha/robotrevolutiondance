@@ -18,6 +18,8 @@ type robot = {
      goal : BDDMath.vec2 ref
 }
 
+val home_pos = BDDMath.vec2 (10.0, 15.0)
+
 fun arrow_pos Up = BDDMath.vec2 (10.0, 20.0)
   | arrow_pos Down = BDDMath.vec2 (10.0, 10.0)
   | arrow_pos Left = BDDMath.vec2 (5.0, 15.0)
@@ -189,7 +191,7 @@ fun make_robot world ground_body start_pos =
          set_base_motor = set_base_motor,
          set_joint1_motor = set_joint1_motor,
          set_joint2_motor = set_joint2_motor,
-         goal = ref (arrow_pos Up)
+         goal = ref home_pos
         }
     end
 
@@ -348,15 +350,63 @@ fun control {base_body : BDD.Body.body,
         set_joint2_motor (d_theta2)
     end
 
+(* goal positions and the times to start going towards them. *)
+val robot1_plan : (int * BDDMath.vec2) Queue.queue ref = ref (Queue.empty ())
+val robot1_plan_last : (int * BDDMath.vec2) ref = ref (0, home_pos)
 
-fun tick world ticks =
+val ticks_processed = ref 0
+
+fun plantos p =
+    String.concat (List.map (fn (i, v) => Int.toString i ^ ":  " ^ vtos v ^ "\n")
+                            (Queue.tolist p))
+
+fun plan ticks moves =
     let
+        val moves' = discard_old_moves (!ticks_processed) moves
+        fun process mvs =
+            case Queue.deq mvs of
+                (NONE, _) => ()
+              | (SOME (tk, dir), mvs') =>
+                let
+                    val (last_tk, last_pos) = !robot1_plan_last
+                    val tk' = Int.min(last_tk + 5, tk + leading_ticks)
+                    val pp = (tk', arrow_pos dir)
+                in
+                    robot1_plan_last := pp;
+                    robot1_plan := (Queue.enq (pp, !robot1_plan));
+                    process mvs'
+                end
+
+        val () = process moves'
+    in
+        print "planned\n";
+        ()
+    end
+
+fun tick world ticks moves =
+    let
+        val horizon = leading_ticks div 2
+        val () = if ticks > !ticks_processed + horizon
+                 then (plan ticks moves;
+                       ticks_processed := ticks)
+                 else ()
+
         val r1 = valOf (!robot1)
+
+(*         val () = robot1_plan := discard_old_moves ticks (!robot1_plan) *)
+        val () = case Queue.peek (!robot1_plan) of
+                     NONE => ()
+                   | SOME (tk, pos) =>
+                       if ticks > tk
+                       then (#goal r1) := pos
+                       else ()
+
         val () = if Int.mod(ticks, 1) = 0
                  then control r1
                  else ()
     in
-        ()
+        print "\n\nrobot 1 plan:\n";
+        print (plantos (!robot1_plan))
     end
 
 val test = Test {init = init,

@@ -258,9 +258,6 @@ struct
           glEnd()
       end
 
-  val ticks_per_second = 60
-
-  val leading_ticks = ticks_per_second * 4
   val target_box_y = 40.0
 
   fun drawmove current_ticks (tick, dir) =
@@ -319,17 +316,10 @@ struct
           val () = BDD.World.step (world, timestep, 12, 10)
       in () end
 
-  fun discard_old_moves ticks_threshold moves =
-      case Queue.peek moves of
-          NONE => moves
-        | SOME (t, d) => if t > ticks_threshold
-                         then moves
-                         else discard_old_moves ticks_threshold (#2 (Queue.deq moves))
-
   fun dotick (s as GS {world, view, test, mouse_joint, settings, ticks, moves}) =
     let
         val Test {tick = robot_tick, ...} = test
-        val () = robot_tick world ticks
+        val () = robot_tick world ticks moves
         val () = dophysics world
         val moves' = discard_old_moves (ticks - 2 * leading_ticks) moves
     in
