@@ -215,27 +215,6 @@ struct
           oapp BDD.Fixture.get_next (drawfixture color tf) fl
       end
 
-  fun drawjoint j =
-      let
-          val body_a = BDD.Joint.get_body_a j
-          val body_b = BDD.Joint.get_body_b j
-          val xf1 = BDD.Body.get_transform body_a
-          val xf2 = BDD.Body.get_transform body_b
-          val x1 = BDDMath.transformposition xf1
-          val x2 = BDDMath.transformposition xf2
-          val p1 = BDD.Joint.get_anchor_a j
-          val p2 = BDD.Joint.get_anchor_b j
-          val color = RGB (0.5, 0.8, 0.8)
-      in
-          case BDD.Joint.get_typ j of
-              (SOME (BDD.Joint.Mouse _)) => ()
-            | _ =>
-              ( Render.draw_segment x1 p1 color;
-                Render.draw_segment p1 p2 color;
-                Render.draw_segment x2 p2 color
-              )
-      end
-
   fun drawmousejoint NONE = ()
     | drawmousejoint (SOME ({get_target, ...}, j)) =
       let val p1 = BDD.Joint.get_anchor_b j
@@ -299,7 +278,6 @@ struct
    glLoadIdentity();
 
    oapp BDD.Body.get_next drawbody (BDD.World.get_body_list world);
-   oapp BDD.Joint.get_next drawjoint (BDD.World.get_joint_list world);
    drawmousejoint mouse_joint;
 
    Queue.app (drawmove ticks) moves;
