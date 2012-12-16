@@ -404,7 +404,7 @@ struct
                                     (world, {
                                              typ = BDD.Joint.MouseDef
                                                        {target = p,
-                                                        max_force = 1000.0 * mass,
+                                                        max_force = 100000.0 * mass,
                                                         frequency_hz = 5.0,
                                                         damping_ratio = 0.7
                                                        },

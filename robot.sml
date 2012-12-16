@@ -40,7 +40,7 @@ fun make_robot world ground_body start_pos =
 
         val base_shape = BDDShape.Polygon (BDDPolygon.box (4.0, 0.5))
         val base_fixture = BDD.Body.create_fixture_default
-                               (base_body, base_shape, RobotFixture, 50.0)
+                               (base_body, base_shape, RobotFixture, 2.0)
 
         val v = start_pos
         val axis = BDDMath.vec2normalized (BDDMath.vec2 (1.0, 0.0))
@@ -90,7 +90,7 @@ fun make_robot world ground_body start_pos =
 
         val segment1_shape = BDDShape.Polygon (BDDPolygon.box (0.5, segment1_length / 2.0))
         val segment1_fixture = BDD.Body.create_fixture_default
-                                   (segment1_body, segment1_shape, RobotFixture, 5.0)
+                                   (segment1_body, segment1_shape, RobotFixture, 1.0)
 
         val j1 = BDD.World.create_joint
                  (world, {typ = BDD.Joint.RevoluteDef
@@ -139,7 +139,7 @@ fun make_robot world ground_body start_pos =
 
         val segment2_shape = BDDShape.Polygon (BDDPolygon.box (0.5, segment2_length / 2.0))
         val segment2_fixture = BDD.Body.create_fixture_default
-                                   (segment2_body, segment2_shape, RobotFixture, 5.0)
+                                   (segment2_body, segment2_shape, RobotFixture, 0.3)
 
         val end_shape = BDDShape.Polygon
                             (BDDPolygon.rotated_box
@@ -157,7 +157,7 @@ fun make_robot world ground_body start_pos =
                                      lower_angle = ~0.25 * Math.pi,
                                      upper_angle = 0.0 * Math.pi,
                                      enable_limit = false,
-                                     max_motor_torque = 100000.0,
+                                     max_motor_torque = 10000.0,
                                      motor_speed = 0.0,
                                      enable_motor = true
                                     },
@@ -284,7 +284,7 @@ fun bullet world =
 fun handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_COMMA}) = bullet world
   | handle_event world _ = ()
 
-val max_angular_speed = 0.75
+val max_angular_speed = 1.0
 
 fun control {base_body : BDD.Body.body,
              segment1_length : real,
@@ -309,9 +309,18 @@ fun control {base_body : BDD.Body.body,
         val p = base_pos :+: ( rot1 +*: s1) :+: (rot2 +*: s2)
         val err = !goal :-: p
 
-        val factor = BDDMath.vec2length err
-        val d_base_x = factor * 100.0 * BDDMath.dot2 (BDDMath.vec2(1.0, 0.0), err)
-        val d_theta1 = BDDMath.clampr (factor * BDDMath.dot2 (rot1' +*: (s1 :+: s1), err),
+        val factor = if BDDMath.vec2length err < 0.25
+                     then 0.0
+                     else if BDDMath.vec2length err < 1.0
+                     then 0.05
+                     else if BDDMath.vec2length err < 3.0
+                     then 0.2
+                     else 0.6
+        val d_base_x = factor * 10.0 * BDDMath.dot2 (BDDMath.vec2(1.0, 0.0), err)
+        val d_theta1 = BDDMath.clampr (factor * BDDMath.dot2
+                                                    (rot1' +*: s1 :+:
+                                                           rot2' +*: s2,
+                                                     err),
                                        ~max_angular_speed,
                                        max_angular_speed)
         val d_theta2 = BDDMath.clampr (factor * BDDMath.dot2 (rot2' +*: s2, err),
