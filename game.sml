@@ -380,6 +380,7 @@ struct
    draw_target_box();
 
    (* draw the score *)
+   glEnable GL_BLEND;
    prepare_score_message score;
    glDisable GL_TEXTURE_2D;
    glColor3f 1.0 1.0 1.0;
