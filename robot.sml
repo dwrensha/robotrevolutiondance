@@ -187,8 +187,14 @@ fun make_robot world ground_body start_pos =
         }
     end
 
-fun make_arrow_body world dir x y =
+fun arrow_pos Up = BDDMath.vec2 (10.0, 20.0)
+  | arrow_pos Down = BDDMath.vec2 (10.0, 10.0)
+  | arrow_pos Left = BDDMath.vec2 (5.0, 15.0)
+  | arrow_pos Right = BDDMath.vec2 (15.0, 15.0)
+
+fun make_arrow_body world dir =
     let
+        val (x, y) = BDDMath.vec2xy (arrow_pos dir)
         val arrow_body = BDD.World.create_body (world,
                                                  {typ = BDD.Body.Static,
                                                   position = BDDMath.vec2 (x, y),
@@ -246,10 +252,10 @@ fun init world =
         val () = robot1 := SOME (make_robot world ground_body ( BDDMath.vec2 (0.0, 0.0)))
         val () = robot2 := SOME (make_robot world ground_body ( BDDMath.vec2 (20.0, 0.0)))
 
-        val uparrow_body = make_arrow_body world Up 10.0 20.0
-        val downarrow_body = make_arrow_body world Down 10.0 10.0
-        val leftarrow_body = make_arrow_body world Left 5.0 15.0
-        val righttarrow_body = make_arrow_body world Right 15.0 15.0
+        val uparrow_body = make_arrow_body world Up
+        val downarrow_body = make_arrow_body world Down
+        val leftarrow_body = make_arrow_body world Left
+        val righttarrow_body = make_arrow_body world Right
 
     in
         ()
@@ -282,6 +288,14 @@ fun bullet world =
   end
 
 fun handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_COMMA}) = bullet world
+  | handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_w}) =
+    #goal (valOf (!robot1)) := arrow_pos Up
+  | handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_a}) =
+    #goal (valOf (!robot1)) := arrow_pos Left
+  | handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_s}) =
+    #goal (valOf (!robot1)) := arrow_pos Down
+  | handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_d}) =
+    #goal (valOf (!robot1)) := arrow_pos Right
   | handle_event world _ = ()
 
 val max_angular_speed = 1.0
