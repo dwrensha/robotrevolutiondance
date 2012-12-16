@@ -27,6 +27,11 @@ fun arrow_pos Up = BDDMath.vec2 (10.0, 20.0)
   | arrow_pos Left = BDDMath.vec2 (5.0, 15.0)
   | arrow_pos Right = BDDMath.vec2 (15.0, 15.0)
 
+fun standby_pos Up = BDDMath.vec2 (10.0, 17.0)
+  | standby_pos Down = BDDMath.vec2 (10.0, 13.0)
+  | standby_pos Left = BDDMath.vec2 (8.0, 15.0)
+  | standby_pos Right = BDDMath.vec2 (12.0, 15.0)
+
 
 
 fun make_robot world ground_body start_pos =
@@ -388,15 +393,20 @@ fun plan ticks moves =
               | (SOME (tk, dir), mvs') =>
                 let
                     val (last_tk, last_pos) = !robot1_plan_last
-                    val tk' = if last_tk < ticks
-                              then ticks + 1
-                              else Int.min(last_tk + 20, tk + leading_ticks)
-                    val pp = (tk', arrow_pos dir)
-                    val pp_home = (tk + leading_ticks + 1, home_pos)
+                    (* when to start the maneuver *)
+                    val standby = if last_tk < ticks
+                                  then ticks
+                                  else last_tk + 1
+                    val hit_it = tk + leading_ticks - 5
+                    val retreat = tk + leading_ticks + 1
+                    val pp_standby = (standby, standby_pos dir)
+                    val pp_hit_it = (hit_it, arrow_pos dir)
+                    val pp_retreat = (retreat, home_pos)
                 in
-                    robot1_plan_last := pp_home;
-                    robot1_plan := (Queue.enq (pp, !robot1_plan));
-                    robot1_plan := (Queue.enq (pp_home, !robot1_plan));
+                    robot1_plan_last := pp_retreat;
+                    robot1_plan := (Queue.enq (pp_standby, !robot1_plan ));
+                    robot1_plan := (Queue.enq (pp_hit_it, !robot1_plan ));
+                    robot1_plan := (Queue.enq (pp_retreat, !robot1_plan ));
                     process mvs'
                 end
 
