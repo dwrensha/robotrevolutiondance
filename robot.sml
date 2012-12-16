@@ -40,7 +40,7 @@ fun make_robot world ground_body start_pos =
 
         val base_shape = BDDShape.Polygon (BDDPolygon.box (4.0, 0.5))
         val base_fixture = BDD.Body.create_fixture_default
-                               (base_body, base_shape, RobotFixture, 5.0)
+                               (base_body, base_shape, RobotFixture, 50.0)
 
         val v = start_pos
         val axis = BDDMath.vec2normalized (BDDMath.vec2 (1.0, 0.0))
@@ -284,6 +284,7 @@ fun bullet world =
 fun handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_COMMA}) = bullet world
   | handle_event world _ = ()
 
+val max_angular_speed = 0.75
 
 fun control {base_body : BDD.Body.body,
              segment1_length : real,
@@ -308,14 +309,19 @@ fun control {base_body : BDD.Body.body,
         val p = base_pos :+: ( rot1 +*: s1) :+: (rot2 +*: s2)
         val err = !goal :-: p
 
-        val factor = 0.005
-        val d_base_x = BDDMath.dot2 (BDDMath.vec2(1.0, 0.0), err)
-        val d_theta1 = BDDMath.dot2 (rot1' +*: (s1 :+: s1), err)
-        val d_theta2 = BDDMath.dot2 (rot2' +*: s2, err)
+        val factor = BDDMath.vec2length err
+        val d_base_x = factor * 100.0 * BDDMath.dot2 (BDDMath.vec2(1.0, 0.0), err)
+        val d_theta1 = BDDMath.clampr (factor * BDDMath.dot2 (rot1' +*: (s1 :+: s1), err),
+                                       ~max_angular_speed,
+                                       max_angular_speed)
+        val d_theta2 = BDDMath.clampr (factor * BDDMath.dot2 (rot2' +*: s2, err),
+                                       ~max_angular_speed,
+                                       max_angular_speed)
+
     in
-        set_base_motor (factor * d_base_x);
-        set_joint1_motor (factor * d_theta1);
-        set_joint2_motor (factor * d_theta2)
+        set_base_motor (d_base_x);
+        set_joint1_motor (d_theta1);
+        set_joint2_motor (d_theta2)
     end
 
 

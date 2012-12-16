@@ -316,7 +316,7 @@ struct
 
   fun dophysics world =
       let val timestep = 1.0 / (Real.fromInt ticks_per_second)
-          val () = BDD.World.step (world, timestep, 8, 8)
+          val () = BDD.World.step (world, timestep, 12, 10)
       in () end
 
   fun discard_old_moves ticks_threshold moves =
