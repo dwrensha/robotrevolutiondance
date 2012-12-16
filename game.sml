@@ -101,15 +101,32 @@ struct
               needs_resize = false}
        end
 
+  val up_touched = ref false
+  val down_touched = ref false
+  val left_touched = ref false
+  val right_touched = ref false
+
+  fun make_touching Up = up_touched := true
+    | make_touching Down = down_touched := true
+    | make_touching Right = right_touched := true
+    | make_touching Left = left_touched := true
+
+  fun stop_touching Up = up_touched := false
+    | stop_touching Down = down_touched := false
+    | stop_touching Right = right_touched := false
+    | stop_touching Left = left_touched := false
+
   fun begin_contact contact =
       let
           val (fA, fB) = BDD.Contact.get_fixtures contact
       in
           case (BDD.Fixture.get_data fA, BDD.Fixture.get_data fB) of
               (ArrowFixture {direction, touching}, RobotFootFixture) =>
-              touching := !touching + 1
+              (touching := !touching + 1;
+               make_touching direction)
             | (RobotFootFixture, ArrowFixture {direction, touching}) =>
-              touching := !touching + 1
+              (touching := !touching + 1;
+               make_touching direction)
             | _ => ()
       end
 
@@ -119,9 +136,15 @@ struct
       in
           case (BDD.Fixture.get_data fA, BDD.Fixture.get_data fB) of
               (ArrowFixture {direction, touching}, RobotFootFixture) =>
-              touching := !touching - 1
+              (touching := !touching - 1;
+               if !touching = 0
+               then stop_touching direction
+               else ())
             | (RobotFootFixture, ArrowFixture {direction, touching}) =>
-              touching := !touching - 1
+              (touching := !touching - 1;
+               if !touching = 0
+               then stop_touching direction
+               else ())
             | _ => ()
       end
 
@@ -140,9 +163,9 @@ struct
                           paused = ref false,
                           profile = ref NONE}
 
-          val () = SDLMusic.loop (valOf groove)
+          val () = SDLMusic.play (valOf groove)
       in GS { test = test, mouse_joint = NONE, world = world,
-              view = view, settings = settings, ticks = 0,
+              view = view, settings = settings, ticks = 0, score = 0,
               moves = Queue.empty() }
       end
 
@@ -262,6 +285,7 @@ struct
           Render.draw_sprite [v1, v2, v3, v4] (arrow_texture dir)
       end
 
+
   fun draw_target_box () =
       let
           val x = ~22.0
@@ -298,20 +322,20 @@ struct
           val () = BDD.World.step (world, timestep, 12, 10)
       in () end
 
-  fun dotick (s as GS {world, view, test, mouse_joint, settings, ticks, moves}) =
+  fun dotick (s as GS {world, view, test, mouse_joint, settings, ticks, score, moves}) =
     let
         val Test {tick = robot_tick, ...} = test
         val () = robot_tick world ticks moves
         val () = dophysics world
         val moves' = discard_old_moves (ticks - 2 * leading_ticks) moves
     in
-        SOME (GS {world = world, view = view, test = test, ticks = ticks + 1,
+        SOME (GS {world = world, view = view, test = test, ticks = ticks + 1, score = score,
                        mouse_joint = mouse_joint, settings = settings, moves = moves'})
     end
 
-  fun tick (s as GS {world, view, test, mouse_joint, settings, ticks, moves}) =
+  fun tick (s as GS {world, view, test, mouse_joint, settings, ticks, moves, score}) =
       let val view' = resize view
-          val s' = GS {world = world, view = view', test = test, ticks = ticks,
+          val s' = GS {world = world, view = view', test = test, ticks = ticks, score = score,
                        mouse_joint = mouse_joint, settings = settings, moves = moves}
       in
           if not (!(#paused settings))
@@ -330,13 +354,13 @@ struct
 
   fun mouse_up (s as GS {world, mouse_joint = NONE, test, ...}) p = SOME s
     | mouse_up (s as GS {world, mouse_joint = SOME (mj, j), test, view, settings,
-                         ticks, moves}) p =
+                         ticks, moves, score}) p =
       let val () = BDD.World.destroy_joint (world, j)
       in SOME (GS {world = world, mouse_joint = NONE, ticks = ticks, moves = moves,
-                   test = test, view = view, settings = settings})
+                   score = score, test = test, view = view, settings = settings})
       end
 
-  fun mouse_down (s as GS {world, mouse_joint, test, view, settings, ticks, moves}) p =
+  fun mouse_down (s as GS {world, mouse_joint, test, view, settings, ticks, score, moves}) p =
       let val d = BDDMath.vec2 (0.001, 0.001)
           val aabb = { lowerbound = p :-: d,
                        upperbound = p :+: d
@@ -390,27 +414,27 @@ struct
                                SOME (BDD.Joint.Mouse mj) => SOME (mj, j)
                              | _ => raise Fail "expected a mouse joint"
                         end
-      in SOME (GS {world = world, mouse_joint = mbe_new_joint, ticks = ticks,
+      in SOME (GS {world = world, mouse_joint = mbe_new_joint, ticks = ticks, score = score,
                    test = test, view = view, settings = settings, moves = moves})
       end
 
-  fun update_view (GS {world, mouse_joint, test, settings, ticks, moves,
+  fun update_view (GS {world, mouse_joint, test, settings, ticks, moves, score,
                        view = View {center, zoom, ...}}) v s =
       SOME (GS {world = world, mouse_joint = mouse_joint, test = test,
-                settings = settings, ticks = ticks, moves = moves,
+                settings = settings, ticks = ticks, moves = moves, score = score,
                 view = View {center = center :+: v,
                              zoom = zoom * s,
                              needs_resize = true}})
 
 
-  fun add_move (GS {world, mouse_joint, test, settings, ticks, moves,
+  fun add_move (GS {world, mouse_joint, test, settings, ticks, moves, score,
                     view}) dir =
       let
           val moves' = Queue.enq ((ticks, dir), moves)
       in
       SOME (GS {world = world, mouse_joint = mouse_joint, test = test,
                 settings = settings, ticks = ticks, moves = moves',
-                view = view})
+                score = score, view = view})
       end
 
   fun handle_event (SDL.E_KeyDown {sym = SDL.SDLK_ESCAPE}) s = NONE

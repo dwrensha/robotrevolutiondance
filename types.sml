@@ -61,7 +61,8 @@ datatype game_state = GS of {world : BDD.world,
                              view : view,
                              ticks : int,
                              moves : (int * direction) Queue.queue,
-                             settings : settings
+                             settings : settings,
+                             score : int
                             }
 
 val ticks_per_second = 60
