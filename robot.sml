@@ -19,6 +19,8 @@ type robot = {
 }
 
 val home_pos = BDDMath.vec2 (10.0, 15.0)
+val home1_pos = BDDMath.vec2 (7.0, 15.0)
+val home2_pos = BDDMath.vec2 (13.0, 15.0)
 
 fun arrow_pos Up = BDDMath.vec2 (10.0, 20.0)
   | arrow_pos Down = BDDMath.vec2 (10.0, 10.0)
@@ -99,6 +101,10 @@ fun make_robot world ground_body start_pos =
         val segment1_shape = BDDShape.Polygon (BDDPolygon.box (0.5, segment1_length / 2.0))
         val segment1_fixture = BDD.Body.create_fixture_default
                                    (segment1_body, segment1_shape, RobotFixture, 1.0)
+        val () = BDD.Fixture.set_filter (segment1_fixture,
+                                         BDD.Fixture.filter_list {categories = [2],
+                                                                  mask = [0],
+                                                                  group_index = 0})
 
         val j1 = BDD.World.create_joint
                  (world, {typ = BDD.Joint.RevoluteDef
@@ -149,12 +155,22 @@ fun make_robot world ground_body start_pos =
         val segment2_fixture = BDD.Body.create_fixture_default
                                    (segment2_body, segment2_shape, RobotFixture, 0.3)
 
+        val () = BDD.Fixture.set_filter (segment2_fixture,
+                                         BDD.Fixture.filter_list {categories = [2],
+                                                                  mask = [0],
+                                                                  group_index = 0})
+
         val end_shape = BDDShape.Polygon
                             (BDDPolygon.rotated_box
                                  (0.25, 0.25,
                                   BDDMath.vec2(0.0, segment2_length / 2.0), 0.0))
         val foot_fixture = BDD.Body.create_fixture_default
                               (segment2_body, end_shape, RobotFootFixture, 0.0)
+
+        val () = BDD.Fixture.set_filter (foot_fixture,
+                                         BDD.Fixture.filter_list {categories = [2],
+                                                                  mask = [0],
+                                                                  group_index = 0})
 
 
         val j2 = BDD.World.create_joint
@@ -354,6 +370,9 @@ fun control {base_body : BDD.Body.body,
 val robot1_plan : (int * BDDMath.vec2) Queue.queue ref = ref (Queue.empty ())
 val robot1_plan_last : (int * BDDMath.vec2) ref = ref (0, home_pos)
 
+val robot2_plan : (int * BDDMath.vec2) Queue.queue ref = ref (Queue.empty ())
+val robot2_plan_last : (int * BDDMath.vec2) ref = ref (0, home_pos)
+
 val ticks_processed = ref 0
 
 fun plantos p =
@@ -388,13 +407,14 @@ fun plan ticks moves =
 
 fun tick world ticks moves =
     let
-        val horizon = leading_ticks div 2
+        val horizon = leading_ticks div 4
         val () = if ticks > !ticks_processed + horizon
                  then (plan ticks moves;
                        ticks_processed := ticks)
                  else ()
 
         val r1 = valOf (!robot1)
+        val r2 = valOf (!robot2)
 
         val () = robot1_plan := discard_old_moves (ticks - 1) (!robot1_plan)
         val () = case Queue.peek (!robot1_plan) of
@@ -407,6 +427,8 @@ fun tick world ticks moves =
 
 
         val () = control r1
+
+        val () = control r2
 
     in
         ()
