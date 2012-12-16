@@ -389,6 +389,14 @@ fun new {local_anchor_a : vec2,
 
         fun get_anchor_b () = D.B.get_world_point (bB, m_local_anchor_b)
 
+        fun get_joint_angle () =
+            let
+                val sweepA = D.B.get_sweep bA
+                val sweepB = D.B.get_sweep bB
+            in
+                (sweepa sweepB) - (sweepa sweepA) - m_reference_angle
+            end
+
         fun enable_limit flag =
             if flag <> !m_enable_limit
             then (D.B.set_awake (bA, true);
@@ -427,6 +435,7 @@ fun new {local_anchor_a : vec2,
 
         val methods = BDDDynamicsTypes.Revolute {enable_limit = enable_limit,
                                                  is_limit_enabled = is_limit_enabled,
+                                                 get_joint_angle = get_joint_angle,
                                                  enable_motor = enable_motor,
                                                  is_motor_enabled = is_motor_enabled,
                                                  set_motor_speed = set_motor_speed}

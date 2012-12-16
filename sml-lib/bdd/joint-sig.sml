@@ -54,6 +54,7 @@ sig
                      }
          | Revolute of {enable_limit : bool -> unit,
                         is_limit_enabled : unit -> bool,
+                        get_joint_angle : unit -> real,
                         enable_motor : bool -> unit,
                         is_motor_enabled : unit -> bool,
                         set_motor_speed : real -> unit
