@@ -115,7 +115,7 @@ struct
              | BDD.Body.Dynamic =>
                if not (BDD.Body.get_awake b)
                then RGB (0.6, 0.6, 0.6)
-               else RGB (0.9, 0.7, 0.7)
+               else RGB (1.0, 0.8, 0.9)
 
 
   fun resize (v as View {center, zoom, needs_resize = false}) = v

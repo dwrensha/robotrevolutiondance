@@ -286,10 +286,14 @@ fun init world =
     end
 
 
-fun bullet world =
-  let val body = BDD.World.create_body (world,
+fun bullet world ticks =
+    if ticks < (ticks_per_second * 88) orelse (Int.mod (ticks, 120) <> 0)
+    then ()
+    else
+  let val y = 10.0 + Math.sin (Real.fromInt ticks) * 10.0
+      val body = BDD.World.create_body (world,
                                         {typ = BDD.Body.Dynamic,
-                                         position = BDDMath.vec2(~31.0, 5.0),
+                                         position = BDDMath.vec2(~32.0, y),
                                          angle = 0.0,
                                          linear_velocity = BDDMath.vec2(400.0, 0.0),
                                          angular_velocity = 0.0,
@@ -306,21 +310,12 @@ fun bullet world =
       val shape = BDDShape.Circle {radius = 0.25,
                                    p = BDDMath.vec2_zero}
       val fixture = BDD.Body.create_fixture_default
-                        (body, shape, GenericFixture, 20.0)
+                        (body, shape, GenericFixture, 15.0)
       val () = BDD.Fixture.set_restitution (fixture, 0.05)
   in ()
   end
 
-fun handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_COMMA}) = bullet world
-  | handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_w}) =
-    #goal (valOf (!robot1)) := arrow_pos Up
-  | handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_a}) =
-    #goal (valOf (!robot1)) := arrow_pos Left
-  | handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_s}) =
-    #goal (valOf (!robot1)) := arrow_pos Down
-  | handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_d}) =
-    #goal (valOf (!robot1)) := arrow_pos Right
-  | handle_event world _ = ()
+fun handle_event world _ = ()
 
 val max_angular_speed = 1.1
 
@@ -449,6 +444,9 @@ fun update_goal rb ticks plan =
 
 fun tick world ticks moves =
     let
+
+        val () = bullet world ticks
+
         val horizon = leading_ticks div 4
         val () = if ticks > !ticks_processed + horizon
                  then (plan ticks moves;
