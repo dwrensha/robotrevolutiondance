@@ -116,6 +116,11 @@ struct
     | stop_touching Right = right_touched := false
     | stop_touching Left = left_touched := false
 
+  fun is_touching Up = !up_touched
+    | is_touching Down = !down_touched
+    | is_touching Right = !right_touched
+    | is_touching Left = !left_touched
+
   fun begin_contact contact =
       let
           val (fA, fB) = BDD.Contact.get_fixtures contact
@@ -286,6 +291,7 @@ struct
       end
 
 
+
   fun draw_target_box () =
       let
           val x = ~22.0
@@ -296,8 +302,34 @@ struct
           val v2 = BDDMath.vec2 (x + w / 2.0, y - h / 2.0)
           val v3 = BDDMath.vec2 (x + w / 2.0, y + h / 2.0)
           val v4 = BDDMath.vec2 (x - w / 2.0, y + h / 2.0)
+
+          val c = RGB (0.7, 0.9, 1.0)
       in
-       Render.draw_polygon [v1, v2, v3, v4] (RGB (1.0, 1.0, 1.0))
+       Render.draw_polygon [v1, v2, v3, v4] (RGB (1.0, 1.0, 1.0));
+       if is_touching Left
+       then Render.draw_solid_polygon [v1, (0.75 *: v1) :+: (0.25 *: v2),
+                                       (0.75 *: v4) :+: (0.25 *: v3), v4]
+                                      c 0.5
+       else ();
+       if is_touching Down
+       then Render.draw_solid_polygon [(0.75 *: v1) :+: (0.25 *: v2),
+                                       (0.5 *: v1) :+: (0.5 *: v2),
+                                       (0.5 *: v4) :+: (0.5 *: v3),
+                                       (0.75 *: v4) :+: (0.25 *: v3)]
+                                      c 0.5
+       else ();
+       if is_touching Up
+       then Render.draw_solid_polygon [(0.5 *: v1) :+: (0.5 *: v2),
+                                       (0.75 *: v2) :+: (0.25 *: v1),
+                                       (0.75 *: v3) :+: (0.25 *: v4),
+                                       (0.5 *: v4) :+: (0.5 *: v3)]
+                                      c 0.5
+       else ();
+       if is_touching Right
+       then Render.draw_solid_polygon [(0.75 *: v2) :+: (0.25 *: v1), v2, v3,
+                                       (0.75 *: v3) :+: (0.25 *: v4)]
+                                      c 0.5
+       else ()
       end
 
   fun render screen (GS {world, mouse_joint, settings, moves, ticks, ...}) =
