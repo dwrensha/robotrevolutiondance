@@ -212,7 +212,7 @@ fun make_robot world ground_body start_pos =
          set_base_motor = set_base_motor,
          set_joint1_motor = set_joint1_motor,
          set_joint2_motor = set_joint2_motor,
-         goal = ref home_pos
+         goal = ref (start_pos :+: BDDMath.vec2 (0.0, segment1_length + segment2_length))
         }
     end
 

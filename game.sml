@@ -56,6 +56,7 @@ struct
 
   val init_message_string = "         0"
   val score_message = make_message init_message_string
+  val game_over_message = make_message "the robot scored:"
 
 
   fun prepare_score_message score =
@@ -391,6 +392,29 @@ struct
    SDL.glflip();
    ()
   end
+    | render screen (GameOver score) =
+      let in
+          glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT);
+          glLoadIdentity();
+
+          (* draw the score *)
+          glColor3f 1.0 1.0 1.0;
+          glRasterPos2d ~20.0 30.0;
+          glPixelZoom 1.0 ~1.0;
+          blit game_over_message;
+
+
+          prepare_score_message score;
+          glDisable GL_TEXTURE_2D;
+          glColor3f 1.0 1.0 1.0;
+          glRasterPos2d ~12.0 20.0;
+          glPixelZoom 1.0 ~1.0;
+          blit score_message;
+
+          glFlush();
+          SDL.glflip();
+          ()
+      end
 
 
   fun dophysics world =
@@ -438,9 +462,13 @@ struct
         val () = dophysics world
         val moves' = discard_old_moves (ticks - 2 * leading_ticks) moves
     in
+        if ticks > 144 * ticks_per_second
+        then SOME (GameOver score')
+        else
         SOME (GS {world = world, view = view, test = test, ticks = ticks + 1, score = score',
                        mouse_joint = mouse_joint, settings = settings, moves = moves'})
     end
+    | dotick s = SOME s
 
   fun tick (s as GS {world, view, test, mouse_joint, settings, ticks, moves, score}) =
       let val view' = resize view
@@ -451,6 +479,7 @@ struct
           then dotick s'
           else SOME s'
       end
+    | tick (s as GameOver score) = SOME s
 
   fun mouse_motion (s as GS {world, mouse_joint = NONE, test, ...}) p = SOME s
     | mouse_motion (s as GS {world, mouse_joint = SOME ({set_target, ...}, _),
@@ -545,9 +574,16 @@ struct
                 settings = settings, ticks = ticks, moves = moves',
                 score = score, view = view})
       end
+    | add_move s dir = SOME s
 
   fun handle_event (SDL.E_KeyDown {sym = SDL.SDLK_ESCAPE}) s = NONE
     | handle_event SDL.E_Quit s = NONE
+
+    | handle_event (SDL.E_KeyDown {sym = SDL.SDLK_SPACE}) (GameOver s) =
+      NONE
+
+    | handle_event _ (GameOver s) =
+      SOME (GameOver s)
 
     | handle_event (SDL.E_KeyDown {sym = sym as SDL.SDLK_LEFT}) s =
       add_move s Left

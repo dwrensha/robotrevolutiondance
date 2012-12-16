@@ -64,6 +64,7 @@ datatype game_state = GS of {world : BDD.world,
                              settings : settings,
                              score : int
                             }
+                    | GameOver of int
 
 val ticks_per_second = 60
 val leading_ticks = ticks_per_second * 4
