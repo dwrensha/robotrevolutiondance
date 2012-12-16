@@ -400,8 +400,11 @@ fun plan ticks moves =
                     val dist1 = BDDMath.vec2length (last_pos1 :-: goal_pos)
                     val dist2 = BDDMath.vec2length (last_pos2 :-: goal_pos)
 
+                    fun goodness dist tks =
+                       (* (~ dist) *) 0.0 - 10.0 * Real.fromInt (tks)
+
                     val (last_tk, last_pos, plan, last) =
-                        if last_tk1 < last_tk2
+                        if goodness dist1 last_tk1 > goodness dist2 last_tk2
                         then (last_tk1, last_pos1, robot1_plan, robot1_plan_last)
                         else (last_tk2, last_pos2, robot2_plan, robot2_plan_last)
                     (* when to start the maneuver *)
