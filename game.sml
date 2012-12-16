@@ -316,7 +316,7 @@ struct
 
   fun dophysics world =
       let val timestep = 1.0 / (Real.fromInt ticks_per_second)
-          val () = BDD.World.step (world, timestep, 8, 5)
+          val () = BDD.World.step (world, timestep, 8, 8)
       in () end
 
   fun discard_old_moves ticks_threshold moves =
@@ -328,8 +328,8 @@ struct
 
   fun dotick (s as GS {world, view, test, mouse_joint, settings, ticks, moves}) =
     let
-        val Test {tick = test_tick, ...} = test
-        val () = test_tick world
+        val Test {tick = robot_tick, ...} = test
+        val () = robot_tick world ticks
         val () = dophysics world
         val moves' = discard_old_moves (ticks - 2 * leading_ticks) moves
     in

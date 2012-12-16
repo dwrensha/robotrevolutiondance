@@ -100,7 +100,7 @@ fun make_robot world ground_body start_pos =
                                      lower_angle = ~0.25 * Math.pi,
                                      upper_angle = 0.0 * Math.pi,
                                      enable_limit = false,
-                                     max_motor_torque = 30000.0,
+                                     max_motor_torque = 300000.0,
                                      motor_speed = 0.0,
                                      enable_motor = true
                                     },
@@ -157,7 +157,7 @@ fun make_robot world ground_body start_pos =
                                      lower_angle = ~0.25 * Math.pi,
                                      upper_angle = 0.0 * Math.pi,
                                      enable_limit = false,
-                                     max_motor_torque = 10000.0,
+                                     max_motor_torque = 100000.0,
                                      motor_speed = 0.0,
                                      enable_motor = true
                                     },
@@ -221,6 +221,9 @@ fun make_arrow_body world dir x y =
         arrow_body
     end
 
+val robot1 = ref NONE
+val robot2 = ref NONE
+
 fun init world =
     let
         val ground_body = BDD.World.create_body (world,
@@ -240,8 +243,8 @@ fun init world =
                                                   inertia_scale = 1.0
                                                 })
 
-        val robot1 = make_robot world ground_body ( BDDMath.vec2 (0.0, 0.0))
-        val robot2 = make_robot world ground_body ( BDDMath.vec2 (20.0, 0.0))
+        val () = robot1 := SOME (make_robot world ground_body ( BDDMath.vec2 (0.0, 0.0)))
+        val () = robot2 := SOME (make_robot world ground_body ( BDDMath.vec2 (20.0, 0.0)))
 
         val uparrow_body = make_arrow_body world Up 10.0 20.0
         val downarrow_body = make_arrow_body world Down 10.0 10.0
@@ -281,8 +284,53 @@ fun bullet world =
 fun handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_COMMA}) = bullet world
   | handle_event world _ = ()
 
+
+fun control {base_body : BDD.Body.body,
+             segment1_length : real,
+             segment2_length : real,
+             get_joint1_angle : unit -> real,
+             get_joint2_angle : unit -> real,
+             set_base_motor : real -> unit,
+             set_joint1_motor : real -> unit,
+             set_joint2_motor : real -> unit,
+             goal : BDDMath.vec2 ref } =
+    let
+        val base_pos = BDD.Body.get_position base_body
+        val base_x = BDDMath.vec2x base_pos
+        val angle1 = get_joint1_angle()
+        val angle2 = get_joint2_angle() + angle1
+        val rot1 = BDDMath.mat22angle angle1
+        val rot1' = BDDMath.mat22angle (angle1 + Math.pi / 2.0)
+        val rot2 = BDDMath.mat22angle angle2
+        val rot2' = BDDMath.mat22angle (angle2 + Math.pi / 2.0)
+        val s1 = BDDMath.vec2 (0.0, segment1_length)
+        val s2 = BDDMath.vec2 (0.0, segment2_length)
+        val p = base_pos :+: ( rot1 +*: s1) :+: (rot2 +*: s2)
+        val err = !goal :-: p
+
+        val factor = 0.005
+        val d_base_x = BDDMath.dot2 (BDDMath.vec2(1.0, 0.0), err)
+        val d_theta1 = BDDMath.dot2 (rot1' +*: (s1 :+: s1), err)
+        val d_theta2 = BDDMath.dot2 (rot2' +*: s2, err)
+    in
+        set_base_motor (factor * d_base_x);
+        set_joint1_motor (factor * d_theta1);
+        set_joint2_motor (factor * d_theta2)
+    end
+
+
+fun tick world ticks =
+    let
+        val r1 = valOf (!robot1)
+        val () = if Int.mod(ticks, 1) = 0
+                 then control r1
+                 else ()
+    in
+        ()
+    end
+
 val test = Test {init = init,
                  handle_event = handle_event,
-                 tick = ignore}
+                 tick = tick}
 
 end
