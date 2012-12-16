@@ -102,29 +102,25 @@ struct
   fun begin_contact contact =
       let
           val (fA, fB) = BDD.Contact.get_fixtures contact
-          fun update_touching f =
-              case BDD.Fixture.get_data f of
-                  ArrowFixture {direction, touching} =>
-                  touching := !touching + 1
-                | _ => ()
-          val () = update_touching fA
-          val () = update_touching fB
       in
-          ()
+          case (BDD.Fixture.get_data fA, BDD.Fixture.get_data fB) of
+              (ArrowFixture {direction, touching}, RobotFootFixture) =>
+              touching := !touching + 1
+            | (RobotFootFixture, ArrowFixture {direction, touching}) =>
+              touching := !touching + 1
+            | _ => ()
       end
 
   fun end_contact contact =
       let
           val (fA, fB) = BDD.Contact.get_fixtures contact
-          fun update_touching f =
-              case BDD.Fixture.get_data f of
-                  ArrowFixture {direction, touching} =>
-                  touching := !touching - 1
-                | _ => ()
-          val () = update_touching fA
-          val () = update_touching fB
       in
-          ()
+          case (BDD.Fixture.get_data fA, BDD.Fixture.get_data fB) of
+              (ArrowFixture {direction, touching}, RobotFootFixture) =>
+              touching := !touching - 1
+            | (RobotFootFixture, ArrowFixture {direction, touching}) =>
+              touching := !touching - 1
+            | _ => ()
       end
 
 
@@ -189,11 +185,15 @@ struct
               case BDD.Fixture.get_data fix of
                   RobotFixture =>
                   Render.draw_textured_polygon vl tf (!steel_texture)
+                | RobotFootFixture =>
+                  Render.draw_solid_polygon (List.map (fn v => tf @*: v) vl)
+                                            (RGB (0.7, 1.0, 0.7))
+                                            1.0
                 | ArrowFixture {direction, touching} =>
                   let val vl' = List.map (fn v => tf @*: v) vl
                   in
                       if !touching > 0
-                      then Render.draw_solid_polygon vl' (RGB (0.7, 0.9, 1.0))
+                      then Render.draw_solid_polygon vl' (RGB (0.7, 0.9, 1.0)) 0.5
                       else ();
                       Render.draw_sprite vl' (arrow_texture direction)
                   end

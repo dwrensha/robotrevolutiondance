@@ -6,6 +6,7 @@ datatype spec = RGB of GL.GLdouble * GL.GLdouble * GL.GLdouble;
 datatype direction = Up | Down | Left | Right
 
 datatype fixture_data = RobotFixture
+                      | RobotFootFixture
                       | ArrowFixture of
                         {direction : direction,
                          touching : int ref}

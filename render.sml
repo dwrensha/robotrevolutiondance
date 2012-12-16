@@ -16,11 +16,11 @@ fun draw_polygon vertexList (RGB (r, g, b)) =
      glEnd()
     )
 
-fun draw_solid_polygon vertexList (RGB (r, g, b)) =
+fun draw_solid_polygon vertexList (RGB (r, g, b)) alpha =
     (
      glEnable GL_BLEND;
      glBlendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA;
-     glColor4d (0.5 * r) (0.5 * g) (0.5 * b) 0.5;
+     glColor4d (alpha * r) (alpha * g) (alpha * b) alpha;
      glBegin GL_TRIANGLE_FAN;
      List.map (fn v => glVertex2d (BDDMath.vec2x v) (BDDMath.vec2y v)) vertexList;
      glEnd ();

@@ -18,6 +18,12 @@ type robot = {
      goal : BDDMath.vec2 ref
 }
 
+fun arrow_pos Up = BDDMath.vec2 (10.0, 20.0)
+  | arrow_pos Down = BDDMath.vec2 (10.0, 10.0)
+  | arrow_pos Left = BDDMath.vec2 (5.0, 15.0)
+  | arrow_pos Right = BDDMath.vec2 (15.0, 15.0)
+
+
 
 fun make_robot world ground_body start_pos =
     let
@@ -145,8 +151,8 @@ fun make_robot world ground_body start_pos =
                             (BDDPolygon.rotated_box
                                  (0.25, 0.25,
                                   BDDMath.vec2(0.0, segment2_length / 2.0), 0.0))
-        val end_fixture = BDD.Body.create_fixture_default
-                              (segment2_body, end_shape, RobotFixture, 0.0)
+        val foot_fixture = BDD.Body.create_fixture_default
+                              (segment2_body, end_shape, RobotFootFixture, 0.0)
 
 
         val j2 = BDD.World.create_joint
@@ -183,14 +189,9 @@ fun make_robot world ground_body start_pos =
          set_base_motor = set_base_motor,
          set_joint1_motor = set_joint1_motor,
          set_joint2_motor = set_joint2_motor,
-         goal = ref (BDDMath.vec2(10.0, 20.0))
+         goal = ref (arrow_pos Up)
         }
     end
-
-fun arrow_pos Up = BDDMath.vec2 (10.0, 20.0)
-  | arrow_pos Down = BDDMath.vec2 (10.0, 10.0)
-  | arrow_pos Left = BDDMath.vec2 (5.0, 15.0)
-  | arrow_pos Right = BDDMath.vec2 (15.0, 15.0)
 
 fun make_arrow_body world dir =
     let
