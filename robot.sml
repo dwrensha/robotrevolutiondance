@@ -322,7 +322,7 @@ fun handle_event world (SDL.E_KeyDown {sym = SDL.SDLK_COMMA}) = bullet world
     #goal (valOf (!robot1)) := arrow_pos Right
   | handle_event world _ = ()
 
-val max_angular_speed = 1.0
+val max_angular_speed = 1.1
 
 fun control {base_body : BDD.Body.body,
              segment1_length : real,
@@ -352,7 +352,7 @@ fun control {base_body : BDD.Body.body,
                      else if BDDMath.vec2length err < 1.0
                      then 0.05
                      else if BDDMath.vec2length err < 3.0
-                     then 0.2
+                     then 0.3
                      else 0.6
         val d_base_x = factor * 10.0 * BDDMath.dot2 (BDDMath.vec2(1.0, 0.0), err)
         val d_theta1 = BDDMath.clampr (factor * BDDMath.dot2
@@ -392,7 +392,18 @@ fun plan ticks moves =
                 (NONE, _) => ()
               | (SOME (tk, dir), mvs') =>
                 let
-                    val (last_tk, last_pos) = !robot1_plan_last
+                    val goal_pos = arrow_pos dir
+
+                    val (last_tk1, last_pos1) = !robot1_plan_last
+                    val (last_tk2, last_pos2) = !robot2_plan_last
+
+                    val dist1 = BDDMath.vec2length (last_pos1 :-: goal_pos)
+                    val dist2 = BDDMath.vec2length (last_pos2 :-: goal_pos)
+
+                    val (last_tk, last_pos, plan, last) =
+                        if last_tk1 < last_tk2
+                        then (last_tk1, last_pos1, robot1_plan, robot1_plan_last)
+                        else (last_tk2, last_pos2, robot2_plan, robot2_plan_last)
                     (* when to start the maneuver *)
                     val standby = if last_tk < ticks
                                   then ticks
@@ -405,16 +416,30 @@ fun plan ticks moves =
                 in
                     if hit_it > last_tk
                     then (
-                        robot1_plan_last := pp_retreat;
-                        robot1_plan := (Queue.enq (pp_standby, !robot1_plan ));
-                        robot1_plan := (Queue.enq (pp_hit_it, !robot1_plan ));
-                        robot1_plan := (Queue.enq (pp_retreat, !robot1_plan ))
+                        last := pp_retreat;
+                        plan := (Queue.enq (pp_standby, !plan ));
+                        plan := (Queue.enq (pp_hit_it, !plan ));
+                        plan := (Queue.enq (pp_retreat, !plan ))
                         )
                     else ();
                     process mvs'
                 end
 
         val () = process moves'
+    in
+        ()
+    end
+
+fun update_goal rb ticks plan =
+    let
+        val () = plan := discard_old_moves (ticks - 1) (!plan)
+        val () = case Queue.peek (!plan) of
+                     NONE => ()
+                   | SOME (tk, pos) =>
+                     if tk = ticks
+                     then
+                       (#goal rb) := pos
+                     else ()
     in
         ()
     end
@@ -430,15 +455,8 @@ fun tick world ticks moves =
         val r1 = valOf (!robot1)
         val r2 = valOf (!robot2)
 
-        val () = robot1_plan := discard_old_moves (ticks - 1) (!robot1_plan)
-        val () = case Queue.peek (!robot1_plan) of
-                     NONE => ()
-                   | SOME (tk, pos) =>
-                     if tk = ticks
-                     then
-                       (#goal r1) := pos
-                     else ()
-
+        val () = update_goal r1 ticks robot1_plan
+        val () = update_goal r2 ticks robot2_plan
 
         val () = control r1
 
