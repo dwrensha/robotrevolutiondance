@@ -399,6 +399,7 @@ struct
           glLoadIdentity();
 
           (* draw the score *)
+          glEnable GL_BLEND;
           glColor3f 1.0 1.0 1.0;
           glRasterPos2d ~20.0 30.0;
           glPixelZoom 1.0 ~1.0;
