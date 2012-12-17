@@ -29,10 +29,8 @@ You can accomplish this with:
 
 Then try:
 ```
-make examples/gaschamber
+make
 ```
-or
-```
-make examples/opengl
-```
+
+The game should appear on your desktop.
 
