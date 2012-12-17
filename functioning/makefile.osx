@@ -1,5 +1,5 @@
 OUTPUT_APP=RobotRevolutionDance
-ICON=media/graphics/ExplatTheRobot.icns
+ICON=media/graphics/arrow.icns
 OUTPUT_EXE=game.exe
 MAKE=make
 
@@ -32,7 +32,7 @@ bin/sdlmix.o: bin sdlml/sdlmix.c
 .PHONY: game
 game: bin/sdlml.o bin/sdlmix.o bin/sdlmain.o
 	export MACOSX_DEPLOYMENT_TARGET=${VERSION_TARGET}
-	mlton $(MLTON_FLAGS) -output $(OUTPUT_EXE) game.cm bin/sdlml.o bin/sdlmix.o bin/sdlmain.o
+	mlton2 $(MLTON_FLAGS) -output $(OUTPUT_EXE) game.cm bin/sdlml.o bin/sdlmix.o bin/sdlmain.o
 	$(MAKE) desktop
 
 .PHONY: examples/* examples/*/
