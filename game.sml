@@ -483,24 +483,24 @@ struct
       end
     | tick (s as GameOver score) = SOME s
 
-  fun mouse_motion (s as GS {world, mouse_joint = NONE, test, ...}) p = SOME s
-    | mouse_motion (s as GS {world, mouse_joint = SOME ({set_target, ...}, _),
-                             test, ...}) p =
+  fun mouse_motion (s as {world, mouse_joint = NONE, test, ...}) p = SOME (GS s)
+    | mouse_motion (s as {world, mouse_joint = SOME ({set_target, ...}, _),
+                          test, ...}) p =
       let
           val () = set_target p
       in
-          SOME s
+          SOME (GS s)
       end
 
-  fun mouse_up (s as GS {world, mouse_joint = NONE, test, ...}) p = SOME s
-    | mouse_up (s as GS {world, mouse_joint = SOME (mj, j), test, view, settings,
-                         ticks, moves, score}) p =
+  fun mouse_up (s as {world, mouse_joint = NONE, test, ...}) p = SOME (GS s)
+    | mouse_up {world, mouse_joint = SOME (mj, j), test, view, settings,
+                ticks, moves, score} p =
       let val () = BDD.World.destroy_joint (world, j)
       in SOME (GS {world = world, mouse_joint = NONE, ticks = ticks, moves = moves,
                    score = score, test = test, view = view, settings = settings})
       end
 
-  fun mouse_down (s as GS {world, mouse_joint, test, view, settings, ticks, score, moves}) p =
+  fun mouse_down {world, mouse_joint, test, view, settings, ticks, score, moves} p =
       let val d = BDDMath.vec2 (0.001, 0.001)
           val aabb = { lowerbound = p :-: d,
                        upperbound = p :+: d
@@ -558,8 +558,8 @@ struct
                    test = test, view = view, settings = settings, moves = moves})
       end
 
-  fun update_view (GS {world, mouse_joint, test, settings, ticks, moves, score,
-                       view = View {center, zoom, ...}}) v s =
+  fun update_view ({world, mouse_joint, test, settings, ticks, moves, score,
+                    view = View {center, zoom, ...}}) v s =
       SOME (GS {world = world, mouse_joint = mouse_joint, test = test,
                 settings = settings, ticks = ticks, moves = moves, score = score,
                 view = View {center = center :+: v,
@@ -597,17 +597,17 @@ struct
       add_move s Down
 
     | handle_event (SDL.E_MouseDown {button, x, y}) (s as (GS gs)) =
-      mouse_down s (screen_to_world (x, y) (#view gs))
+      mouse_down gs (screen_to_world (x, y) (#view gs))
     | handle_event (SDL.E_MouseUp {button, x, y}) (s as (GS gs)) =
-      mouse_up s (screen_to_world (x, y) (#view gs))
+      mouse_up gs (screen_to_world (x, y) (#view gs))
     | handle_event (SDL.E_MouseMotion {which, state, x, y, xrel, yrel}) (s as (GS gs)) =
-      mouse_motion s (screen_to_world (x, y) (#view gs))
+      mouse_motion gs (screen_to_world (x, y) (#view gs))
 
 
-    | handle_event (SDL.E_KeyDown {sym = SDL.SDLK_z}) s =
-      update_view s (BDDMath.vec2 (0.0, 0.0)) 1.1
-    | handle_event (SDL.E_KeyDown {sym = SDL.SDLK_x}) s =
-      update_view s (BDDMath.vec2 (0.0, 0.0)) 0.9
+    | handle_event (SDL.E_KeyDown {sym = SDL.SDLK_z}) (GS gs) =
+      update_view gs (BDDMath.vec2 (0.0, 0.0)) 1.1
+    | handle_event (SDL.E_KeyDown {sym = SDL.SDLK_x}) (GS gs) =
+      update_view gs (BDDMath.vec2 (0.0, 0.0)) 0.9
 
     | handle_event e (s as GS {world, test = Test {handle_event = he, ... }, ...})  =
       (he world e; SOME s)
